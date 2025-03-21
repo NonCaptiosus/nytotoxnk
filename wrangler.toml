@@ -1,0 +1,20 @@
+name = "blog-api"
+main = "src/worker/index.ts"
+compatibility_date = "2023-11-15"
+
+[site]
+bucket = ".next/static"
+
+[[kv_namespaces]]
+binding = "BLOG_DATA"
+id = "607059d6b5374ae7b2927373ad7d4509"
+preview_id = "5b1da8a51f794f76b08d843021acb244"
+
+[vars]
+ENVIRONMENT = "production"
+API_SECRET = "100e11ea0f87724622e73e2d3ec69bb145dcb89cf81e9c46e0f1ff71fda18a55"
+
+[env.development]
+name = "blog-api-dev"
+[env.development.vars]
+ENVIRONMENT = "development" 
