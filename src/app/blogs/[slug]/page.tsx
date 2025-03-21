@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { fetchPostBySlug } from '../../../lib/api';
 import { notFound } from 'next/navigation';
 
+export const runtime = 'edge';
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const post = await fetchPostBySlug(params.slug);
   
@@ -29,14 +31,14 @@ export default async function BlogPost({ params }: { params: { slug: string } })
     <article className="max-w-4xl mx-auto">
       <Link 
         href="/blogs" 
-        className="text-primary hover:underline mb-6 inline-block"
+        className="text-primary hover:underline mb-6 inline-block dark:text-text-dark"
       >
         ← Back to all posts
       </Link>
       
-      <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+      <h1 className="text-4xl font-bold mb-4 text-primary dark:text-text-dark font-serif">{post.title}</h1>
       
-      <div className="flex items-center text-gray-500 mb-8">
+      <div className="flex items-center text-secondary dark:text-accent-dark mb-8">
         <time dateTime={post.createdAt}>
           {new Date(post.createdAt || '').toLocaleDateString('en-US', {
             year: 'numeric',
@@ -55,9 +57,9 @@ export default async function BlogPost({ params }: { params: { slug: string } })
         )}
       </div>
       
-      <div className="prose prose-lg max-w-none">
+      <div className="prose prose-lg max-w-none dark:prose-invert">
         {post.content.split('\n\n').map((paragraph, index) => (
-          <p key={index} className="mb-4">
+          <p key={index} className="mb-4 text-secondary dark:text-accent-dark">
             {paragraph}
           </p>
         ))}

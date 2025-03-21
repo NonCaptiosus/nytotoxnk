@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { fetchPosts, Post } from '../lib/api';
 
+export const runtime = 'edge';
+
 export default async function Home() {
   const posts = await fetchPosts();
   

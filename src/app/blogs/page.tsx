@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { fetchPosts, Post } from '../../lib/api';
 
+export const runtime = 'edge';
+
 export const metadata = {
   title: 'Blog Posts',
   description: 'Read all my blog posts about web development and technology',
