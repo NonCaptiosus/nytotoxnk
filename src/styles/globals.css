@@ -5,11 +5,15 @@
 /* Additional custom styles can be added here */
 @layer base {
   body {
-    @apply text-gray-800 bg-gray-50;
+    @apply text-text-light bg-background-light transition-colors duration-200;
+  }
+  
+  .dark body {
+    @apply text-text-dark bg-background-dark;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold text-primary;
+    @apply font-bold text-primary dark:text-text-dark;
   }
   
   a {
@@ -23,15 +27,15 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-white hover:bg-opacity-90;
+    @apply bg-primary text-white hover:bg-opacity-90 dark:bg-accent-dark dark:text-background-dark;
   }
   
   .btn-secondary {
-    @apply bg-white text-primary border border-primary hover:bg-gray-50;
+    @apply bg-white text-primary border border-primary hover:bg-gray-50 dark:bg-background-dark dark:text-text-dark dark:border-accent-dark dark:hover:bg-neutral-800;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-card-light rounded-lg shadow-sm p-6 dark:bg-card-dark;
   }
   
   .container {

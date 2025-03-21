@@ -1,15 +1,24 @@
-"use client"
-
 import '../styles/globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Libre_Baskerville, Montserrat } from 'next/font/google';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { ThemeProvider } from '../components/ThemeProvider';
 
-const inter = Inter({ subsets: ['latin'] });
+const libre = Libre_Baskerville({ 
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  variable: '--font-libre'
+});
+
+const montserrat = Montserrat({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  variable: '--font-montserrat'
+});
 
 export const metadata: Metadata = {
-  title: 'Personal Blog',
+  title: 'nytotoxNK Blog',
   description: 'A personal blog built with Next.js and Cloudflare',
 };
 
@@ -19,15 +28,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">
-            {children}
-          </main>
-          <Footer />
-        </div>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${libre.variable} ${montserrat.variable} font-sans`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

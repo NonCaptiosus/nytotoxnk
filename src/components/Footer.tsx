@@ -6,33 +6,33 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-800 text-white">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="border-t border-gray-100 dark:border-neutral-800 py-12">
+      <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About section */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">About Me</h3>
-            <p className="text-gray-400">
+            <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">About Me</h3>
+            <p className="text-secondary dark:text-accent-dark">
               Web developer passionate about creating modern, responsive web applications using the latest technologies.
             </p>
           </div>
 
           {/* Quick links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/blogs" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/blogs" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/projects" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/projects" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
                   Projects
                 </Link>
               </li>
@@ -41,13 +41,13 @@ export default function Footer() {
 
           {/* Social links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Connect</h3>
+            <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">Connect</h3>
             <div className="flex space-x-4">
               <a
                 href="https://github.com/yourusername"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors"
                 aria-label="GitHub"
               >
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -58,7 +58,7 @@ export default function Footer() {
                 href="https://twitter.com/yourusername"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors"
                 aria-label="Twitter"
               >
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ export default function Footer() {
                 href="https://linkedin.com/in/yourusername"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors"
                 aria-label="LinkedIn"
               >
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -80,8 +80,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400">
-          <p>© {currentYear} Aldo Diku. All rights reserved.</p>
+        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-neutral-800 text-center text-secondary dark:text-accent-dark">
+          <p>© {currentYear} nytotoxNK. All rights reserved.</p>
         </div>
       </div>
     </footer>
