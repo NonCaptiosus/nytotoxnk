@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250320.0",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.13.11",
     "autoprefixer": "^10.4.21",
     "eslint-plugin-tailwindcss": "^3.18.0",
