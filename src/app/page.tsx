@@ -11,7 +11,7 @@ export default async function Home() {
       <section className="p-8">
         <h1 className="text-4xl font-bold mb-4 font-serif text-primary dark:text-text-dark">Welcome to My Blog</h1>
         <p className="text-xl mb-6 text-secondary dark:text-accent-dark">
-          Exploring web development, cloud technologies, and more.
+          Exploring web development, cloud technologies, cybersecurity & networking, IoT, AI & Machine Learning
         </p>
         <div className="flex gap-4">
           <Link 

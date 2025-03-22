@@ -13,30 +13,8 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">About Me</h3>
             <p className="text-secondary dark:text-accent-dark">
-              Web developer passionate about creating modern, responsive web applications using the latest technologies.
+              Web developer passionate about creating modern, responsive web applications using the latest technologies. Cybersecurity & Network Enthusiast | Mobile & Web Developer | Passionate About AI & Machine Learning
             </p>
-          </div>
-
-          {/* Quick links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/blogs" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/projects" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
-                  Projects
-                </Link>
-              </li>
-            </ul>
           </div>
 
           {/* Social links */}
@@ -44,7 +22,7 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">Connect</h3>
             <div className="flex space-x-4">
               <a
-                href="https://github.com/yourusername"
+                href="https://github.com/NonCaptiosus"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors"
@@ -55,18 +33,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://twitter.com/yourusername"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors"
-                aria-label="Twitter"
-              >
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723 9.99 9.99 0 01-3.127 1.195 4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                </svg>
-              </a>
-              <a
-                href="https://linkedin.com/in/yourusername"
+                href="https://www.linkedin.com/in/aldo-diku-037722141/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors"
