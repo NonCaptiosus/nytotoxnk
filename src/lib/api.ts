@@ -18,6 +18,13 @@ export interface Post {
   updatedAt?: string;
 }
 
+// New post interface for creation
+export interface NewPost {
+  title: string;
+  slug: string;
+  content: string;
+}
+
 // API response interfaces
 interface PostsResponse {
   posts: Post[];
@@ -25,6 +32,12 @@ interface PostsResponse {
 
 interface PostResponse {
   post: Post;
+}
+
+interface CreatePostResponse {
+  post: Post;
+  success: boolean;
+  message?: string;
 }
 
 /**
@@ -72,5 +85,45 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
   } catch (error) {
     console.error(`Error fetching post with slug ${slug}:`, error);
     return null;
+  }
+}
+
+/**
+ * Create a new blog post
+ */
+export async function createPost(newPost: NewPost): Promise<{success: boolean; message: string; post?: Post}> {
+  console.log('Sending post to API:', newPost);
+  
+  try {
+    const response = await fetch(`${API_URL}/api/posts`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newPost),
+    });
+
+    const data = await response.json() as CreatePostResponse;
+    console.log('API response:', data);
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || `API error: ${response.status}`,
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Post created successfully',
+      post: data.post,
+    };
+  } catch (error) {
+    console.error('Error creating post:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
   }
 } 

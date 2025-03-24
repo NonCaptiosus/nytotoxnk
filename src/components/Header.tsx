@@ -48,6 +48,22 @@ export default function Header() {
                     Projects
                   </Link>
                 </li>
+                <li>
+                  <Link 
+                    href="/create-blog" 
+                    className={`hover:text-secondary dark:hover:text-accent-dark ${isActive('/create-blog') ? 'text-primary font-semibold dark:text-text-dark' : 'text-secondary dark:text-accent-dark'}`}
+                  >
+                    Create Blog
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/about" 
+                    className={`hover:text-secondary dark:hover:text-accent-dark ${isActive('/about') ? 'text-primary font-semibold dark:text-text-dark' : 'text-secondary dark:text-accent-dark'}`}
+                  >
+                    About Me
+                  </Link>
+                </li>
               </ul>
             </nav>
             <ThemeSwitcher />
