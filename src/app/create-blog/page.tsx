@@ -222,7 +222,7 @@ export default function CreateBlogPage() {
         <h3 className="text-lg font-semibold mb-2 text-primary dark:text-text-dark">API Status</h3>
         <p className="text-sm text-secondary dark:text-accent-dark mb-2">
           The Cloudflare Worker API is experiencing issues with CORS and returning 500 errors. 
-          We've implemented fallback behavior for viewing content and a development mode for creating content.
+          We have implemented fallback behavior for viewing content and a development mode for creating content.
         </p>
         <p className="text-sm text-secondary dark:text-accent-dark">
           To fix the Cloudflare Worker, handle OPTIONS requests and ensure proper CORS headers are returned.
