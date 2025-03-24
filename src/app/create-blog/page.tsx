@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { createPost, NewPost } from '../../lib/api';
+import { useRouter } from 'next/navigation';
 
 export default function CreateBlogPage() {
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [content, setContent] = useState('');
@@ -22,6 +24,9 @@ export default function CreateBlogPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitResult(null);
+    
+    // Clear previous logs on new submission
+    setLogs([]);
     
     // Basic validation
     if (!title || !slug || !content) {
@@ -65,6 +70,22 @@ export default function CreateBlogPage() {
         setTitle('');
         setSlug('');
         setContent('');
+        
+        addLog('Post created successfully.');
+        
+        // If we're in dev mode with a mock post
+        if (result.message.includes('DEV MODE')) {
+          addLog('Note: This was a simulated success in development mode. The post was not actually sent to the server.');
+        } else if (result.post) {
+          addLog(`Post ID: ${result.post.id}`);
+          
+          // Optionally navigate to the new post after a delay
+          setTimeout(() => {
+            router.push(`/blogs/${result.post?.slug}`);
+          }, 2000);
+        }
+      } else {
+        addLog(`Error: ${result.message}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -86,6 +107,8 @@ export default function CreateBlogPage() {
         .replace(/\s+/g, '-');
       setSlug(generatedSlug);
       addLog(`Generated slug: ${generatedSlug}`);
+    } else {
+      addLog('Please enter a title first to generate a slug');
     }
   };
 
@@ -148,7 +171,7 @@ export default function CreateBlogPage() {
           />
         </div>
         
-        <div>
+        <div className="flex justify-between">
           <button
             type="submit"
             disabled={isSubmitting}
@@ -156,6 +179,10 @@ export default function CreateBlogPage() {
           >
             {isSubmitting ? 'Submitting...' : 'Create Post'}
           </button>
+          
+          <div className="text-xs text-secondary dark:text-accent-dark">
+            <p>Note: If the API is unavailable, posts will be saved in development mode only.</p>
+          </div>
         </div>
       </form>
       
@@ -164,6 +191,11 @@ export default function CreateBlogPage() {
           <p className={`text-sm font-medium ${submitResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
             {submitResult.message}
           </p>
+          {submitResult.success && submitResult.message.includes('DEV MODE') && (
+            <p className="mt-2 text-xs text-green-700 dark:text-green-300">
+              The API is currently unavailable. This is a simulated success in development mode.
+            </p>
+          )}
         </div>
       )}
       
@@ -183,6 +215,18 @@ export default function CreateBlogPage() {
             <p className="text-sm text-secondary dark:text-accent-dark">No logs yet. Create a post to see API interaction.</p>
           )}
         </div>
+      </div>
+      
+      {/* API Status Information */}
+      <div className="mt-8 p-4 border border-gray-200 dark:border-neutral-700 rounded-md">
+        <h3 className="text-lg font-semibold mb-2 text-primary dark:text-text-dark">API Status</h3>
+        <p className="text-sm text-secondary dark:text-accent-dark mb-2">
+          The Cloudflare Worker API is experiencing issues with CORS and returning 500 errors. 
+          We've implemented fallback behavior for viewing content and a development mode for creating content.
+        </p>
+        <p className="text-sm text-secondary dark:text-accent-dark">
+          To fix the Cloudflare Worker, handle OPTIONS requests and ensure proper CORS headers are returned.
+        </p>
       </div>
     </div>
   );

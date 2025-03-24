@@ -37,35 +37,7 @@ export default function Footer() {
               </a>
             </div>
           </div>
-          
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/blogs" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/projects" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
-                  Projects
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-secondary dark:text-accent-dark hover:text-primary dark:hover:text-text-dark transition-colors">
-                  About Me
-                </Link>
-              </li>
-            </ul>
-          </div>
         </div>
-
         <div className="mt-8 pt-8 border-t border-gray-100 dark:border-neutral-800 text-center text-secondary dark:text-accent-dark">
           <p>© {currentYear} nytotoxNK. All rights reserved.</p>
         </div>

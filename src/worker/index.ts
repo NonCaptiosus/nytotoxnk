@@ -35,7 +35,7 @@ const jsonResponse = (data: any, status = 200) => {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
     },
     status,
   });
@@ -44,10 +44,11 @@ const jsonResponse = (data: any, status = 200) => {
 // CORS preflight handler
 router.options('*', () => {
   return new Response(null, {
+    status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
       'Access-Control-Max-Age': '86400',
     },
   });
@@ -67,9 +68,11 @@ router.get('/api/posts', async (request, env: Env) => {
       })
     );
     
-    return jsonResponse(posts);
+    // Return posts wrapped in the expected format
+    return jsonResponse({ posts: posts });
   } catch (error) {
-    return jsonResponse({ error: 'Failed to fetch posts' }, 500);
+    console.error('Error fetching posts:', error);
+    return jsonResponse({ error: 'Failed to fetch posts', posts: [] }, 500);
   }
 });
 
@@ -84,22 +87,26 @@ router.get('/api/posts/:slug', async (request, env: Env, context) => {
     for (const key of keys.keys) {
       const post = await env.BLOG_DATA.get(key.name, 'json') as BlogPost;
       if (post && post.slug === slug) {
-        return jsonResponse(post);
+        return jsonResponse({ post: post });
       }
     }
     
-    return jsonResponse({ error: 'Post not found' }, 404);
+    return jsonResponse({ error: 'Post not found', post: null }, 404);
   } catch (error) {
-    return jsonResponse({ error: 'Failed to fetch post' }, 500);
+    console.error('Error fetching post:', error);
+    return jsonResponse({ error: 'Failed to fetch post', post: null }, 500);
   }
 });
 
 // POST create a new blog post
 router.post('/api/posts', async (request, env: Env) => {
   try {
+    console.log('Received POST request to create post');
+    
     // Check authentication
     if (!authenticateRequest(request, env)) {
-      return jsonResponse({ error: 'Unauthorized' }, 401);
+      console.log('Authentication failed');
+      return jsonResponse({ error: 'Unauthorized', success: false }, 401);
     }
     
     // Parse request body
@@ -107,7 +114,8 @@ router.post('/api/posts', async (request, env: Env) => {
     
     // Basic validation
     if (!post.title || !post.slug || !post.content) {
-      return jsonResponse({ error: 'Missing required fields' }, 400);
+      console.log('Missing required fields:', post);
+      return jsonResponse({ error: 'Missing required fields', success: false }, 400);
     }
     
     // Create post object with timestamp
@@ -120,10 +128,21 @@ router.post('/api/posts', async (request, env: Env) => {
     
     // Store in KV
     await env.BLOG_DATA.put(`post:${newPost.id}`, JSON.stringify(newPost));
+    console.log('Post created successfully:', newPost.id);
     
-    return jsonResponse(newPost, 201);
+    // Return in expected format
+    return jsonResponse({ 
+      post: newPost, 
+      success: true,
+      message: 'Post created successfully'
+    }, 201);
   } catch (error) {
-    return jsonResponse({ error: 'Failed to create post' }, 500);
+    console.error('Failed to create post:', error);
+    return jsonResponse({ 
+      error: 'Failed to create post', 
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
   }
 });
 
@@ -132,7 +151,7 @@ router.put('/api/posts/:id', async (request, env: Env) => {
   try {
     // Check authentication
     if (!authenticateRequest(request, env)) {
-      return jsonResponse({ error: 'Unauthorized' }, 401);
+      return jsonResponse({ error: 'Unauthorized', success: false }, 401);
     }
     
     const { id } = request.params;
@@ -142,7 +161,7 @@ router.put('/api/posts/:id', async (request, env: Env) => {
     const existingPost = await env.BLOG_DATA.get(`post:${id}`, 'json') as BlogPost;
     
     if (!existingPost) {
-      return jsonResponse({ error: 'Post not found' }, 404);
+      return jsonResponse({ error: 'Post not found', success: false }, 404);
     }
     
     // Update the post
@@ -155,9 +174,17 @@ router.put('/api/posts/:id', async (request, env: Env) => {
     // Store updated post
     await env.BLOG_DATA.put(`post:${id}`, JSON.stringify(updatedPost));
     
-    return jsonResponse(updatedPost);
+    return jsonResponse({ 
+      post: updatedPost,
+      success: true,
+      message: 'Post updated successfully'
+    });
   } catch (error) {
-    return jsonResponse({ error: 'Failed to update post' }, 500);
+    return jsonResponse({ 
+      error: 'Failed to update post', 
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
   }
 });
 
@@ -166,7 +193,7 @@ router.delete('/api/posts/:id', async (request, env: Env) => {
   try {
     // Check authentication
     if (!authenticateRequest(request, env)) {
-      return jsonResponse({ error: 'Unauthorized' }, 401);
+      return jsonResponse({ error: 'Unauthorized', success: false }, 401);
     }
     
     const { id } = request.params;
@@ -175,15 +202,19 @@ router.delete('/api/posts/:id', async (request, env: Env) => {
     const post = await env.BLOG_DATA.get(`post:${id}`, 'json');
     
     if (!post) {
-      return jsonResponse({ error: 'Post not found' }, 404);
+      return jsonResponse({ error: 'Post not found', success: false }, 404);
     }
     
     // Delete the post
     await env.BLOG_DATA.delete(`post:${id}`);
     
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
-    return jsonResponse({ error: 'Failed to delete post' }, 500);
+    return jsonResponse({ 
+      error: 'Failed to delete post', 
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
   }
 });
 
@@ -193,6 +224,17 @@ router.all('*', () => jsonResponse({ error: 'Not Found' }, 404));
 // Main fetch handler
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    return router.handle(request, env, ctx);
+    try {
+      // Add basic request logging
+      console.log(`${request.method} ${new URL(request.url).pathname}`);
+      return router.handle(request, env, ctx);
+    } catch (error) {
+      console.error('Unhandled error:', error);
+      return jsonResponse({ 
+        error: 'Internal server error', 
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      }, 500);
+    }
   },
 }; 
