@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { createPost, NewPost } from '../../lib/api';
+import { createPost, Post } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function CreateBlogPage() {
@@ -47,7 +47,7 @@ export default function CreateBlogPage() {
         .replace(/\s+/g, '-');
     }
     
-    const newPost: NewPost = {
+    const newPost: Post = {
       title,
       slug: slugToUse,
       content,

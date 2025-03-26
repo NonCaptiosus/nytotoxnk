@@ -50,7 +50,7 @@ interface ErrorResponse {
 interface CreatePostResponse {
   post: Post;
   success: boolean;
-  message?: string;
+  message: string;
 }
 
 /**
@@ -128,7 +128,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
 /**
  * Create a new blog post
  */
-export async function createPost(post: Post): Promise<Post | null> {
+export async function createPost(post: Post): Promise<CreatePostResponse> {
   try {
     console.log('Creating post via Cloudflare Worker API');
     
@@ -203,7 +203,11 @@ export async function createPost(post: Post): Promise<Post | null> {
     try {
       const data = await response.json() as Post;
       console.log('Post created successfully with ID:', data.id);
-      return data;
+      return {
+        post: data,
+        success: true,
+        message: 'Post created successfully'
+      };
     } catch (parseError) {
       console.error('Error parsing successful response:', parseError);
       throw new Error('API error: Failed to parse server response');
@@ -214,6 +218,26 @@ export async function createPost(post: Post): Promise<Post | null> {
       throw new Error('Failed to fetch: Unable to connect to the server');
     } else {
       console.error('Error creating post:', error);
+      
+      // Return development mode success for local testing
+      if (process.env.NODE_ENV === 'development') {
+        const mockPost: Post = {
+          id: 'local-' + Date.now(),
+          title: post.title,
+          slug: post.slug,
+          content: post.content,
+          author: post.author,
+          tags: post.tags,
+          created: Date.now()
+        };
+        
+        return {
+          post: mockPost,
+          success: true,
+          message: '[DEV MODE] Post created successfully (simulated)'
+        };
+      }
+      
       throw error;
     }
   }
