@@ -97,7 +97,7 @@ export default function BlogPostPage() {
           {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag, index) => (
-                <span key={index} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                <span key={index} className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-0.5 rounded dark:bg-accent-dark/20 dark:text-accent-dark">
                   {tag}
                 </span>
               ))}

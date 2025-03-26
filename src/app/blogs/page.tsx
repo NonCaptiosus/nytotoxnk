@@ -87,7 +87,7 @@ export default function BlogsPage() {
                 {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
                   <div className="ml-4 flex gap-2">
                     {post.tags.slice(0, 3).map((tag, idx) => (
-                      <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      <span key={idx} className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded dark:bg-accent-dark/20 dark:text-accent-dark">
                         {tag}
                       </span>
                     ))}

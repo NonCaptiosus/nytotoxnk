@@ -290,7 +290,7 @@ export default function CreatePostPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-3 bg-primary text-white font-medium rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-text-dark dark:hover:bg-text-dark/90 transition-colors disabled:opacity-50"
+            className="px-6 py-3 bg-primary text-white font-medium rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-text-dark dark:text-background-dark dark:hover:bg-text-dark/90 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? 'Creating...' : 'Create Post'}
           </button>
