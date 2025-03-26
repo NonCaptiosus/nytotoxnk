@@ -16,6 +16,8 @@ const FALLBACK_POSTS = [
     slug: 'getting-started-with-nextjs',
     content: 'Next.js is a powerful React framework that makes building web applications simple and efficient. This post explores the basics of getting started with Next.js and its key features like server-side rendering, static site generation, and API routes.',
     createdAt: new Date().toISOString(),
+    author: 'Admin',
+    tags: ['Next.js', 'React', 'Web Development']
   },
   {
     id: 'fallback-2',
@@ -23,6 +25,8 @@ const FALLBACK_POSTS = [
     slug: 'cloudflare-workers-for-beginners',
     content: 'Cloudflare Workers allows you to run serverless JavaScript at the edge. This tutorial walks through deploying your first Worker and explains key concepts for building highly available APIs.',
     createdAt: new Date().toISOString(),
+    author: 'Admin',
+    tags: ['Cloudflare', 'Serverless', 'Edge Computing']
   }
 ];
 
@@ -73,7 +77,21 @@ export async function fetchPosts(): Promise<Post[]> {
     }
 
     const data = await response.json() as Post[];
-    return data || [];
+    
+    // Ensure data is an array and all items are valid posts
+    if (!Array.isArray(data)) {
+      console.error('API did not return an array of posts:', data);
+      return FALLBACK_POSTS;
+    }
+    
+    // Filter out any invalid posts and ensure tags is always an array
+    const validPosts = data.filter(post => post && typeof post === 'object' && post.title && post.slug)
+      .map(post => ({
+        ...post,
+        tags: Array.isArray(post.tags) ? post.tags : []
+      }));
+    
+    return validPosts.length > 0 ? validPosts : FALLBACK_POSTS;
   } catch (error) {
     console.error('Error fetching posts:', error);
     // Return fallback posts when API fails
@@ -110,7 +128,18 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     }
 
     const data = await response.json() as Post;
-    return data || null;
+    
+    // Ensure the post has valid structure and tags is always an array
+    if (!data || typeof data !== 'object' || !data.title || !data.slug) {
+      console.error(`Invalid post data received for slug ${slug}:`, data);
+      return fallbackPost || null;
+    }
+    
+    // Normalize the post data
+    return {
+      ...data,
+      tags: Array.isArray(data.tags) ? data.tags : []
+    };
   } catch (error) {
     console.error(`Error fetching post with slug ${slug}:`, error);
     

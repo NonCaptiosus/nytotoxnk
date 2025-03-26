@@ -84,7 +84,7 @@ export default function BlogsPage() {
                 <span className="mr-3">By {post.author || 'Anonymous'}</span>
                 <span>{formatDate(post.created || post.createdAt)}</span>
                 
-                {post.tags && post.tags.length > 0 && (
+                {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
                   <div className="ml-4 flex gap-2">
                     {post.tags.slice(0, 3).map((tag, idx) => (
                       <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
