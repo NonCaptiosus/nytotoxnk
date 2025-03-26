@@ -15,12 +15,12 @@ export default function AboutPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
         <div className="md:col-span-2">
           <h2 className="text-xl font-semibold mb-4 font-serif text-primary dark:text-text-dark">
-            Hey there, I'm Aldo!
+            Hey there, I&apos;m Aldo!
           </h2>
           
           <div className="prose dark:prose-invert max-w-none">
             <p className="mb-4">
-              I'm a web developer passionate about creating modern, responsive web applications using the latest technologies.
+              I&apos;m a web developer passionate about creating modern, responsive web applications using the latest technologies.
             </p>
             
             <p className="mb-4">
@@ -35,8 +35,8 @@ export default function AboutPage() {
             
             <p>
               I enjoy taking on challenging projects that allow me to combine my technical skills with creative problem-solving.
-              Whether it's building performant web applications, securing networks, or exploring the potential of AI,
-              I'm always eager to learn and grow.
+              Whether it&apos;s building performant web applications, securing networks, or exploring the potential of AI,
+              I&apos;m always eager to learn and grow.
             </p>
           </div>
         </div>
