@@ -18,3 +18,6 @@ API_SECRET = "100e11ea0f87724622e73e2d3ec69bb145dcb89cf81e9c46e0f1ff71fda18a55"
 name = "blog-api-dev"
 [env.development.vars]
 ENVIRONMENT = "development" 
+
+[observability.logs]
+enabled = true

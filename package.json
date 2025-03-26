@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "worker:dev": "cd src/worker && wrangler dev --local",
+    "dev:all": "npm run worker:dev & npm run dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -27,11 +29,30 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250320.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/debug": "^4.1.12",
+    "@types/estree": "^1.0.6",
+    "@types/estree-jsx": "^1.0.5",
+    "@types/hast": "^3.0.4",
+    "@types/mdast": "^4.0.4",
     "@types/node": "^22.13.11",
+    "@types/unist": "^3.0.3",
     "autoprefixer": "^10.4.21",
     "eslint-plugin-tailwindcss": "^3.18.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.17",
-    "wrangler": "^3.19.0"
-  }
+    "wrangler": "^4.4.0"
+  },
+  "description": "A modern personal blog and portfolio website built with Next.js, showcasing projects and blog posts. Features an admin panel for content management and uses Cloudflare Pages for hosting and Cloudflare Workers for the backend API.",
+  "main": "next.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NonCaptiosus/nytotoxnk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NonCaptiosus/nytotoxnk/issues"
+  },
+  "homepage": "https://github.com/NonCaptiosus/nytotoxnk#readme"
 }

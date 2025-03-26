@@ -2,15 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Optimize for Cloudflare Pages
-  output: 'standalone',
+  // Temporarily disable output standalone for development
+  // output: 'standalone',
   // Enable image optimization for Cloudflare Pages
   images: {
     unoptimized: true,
     domains: ['blog-api.aldodiku.workers.dev'],
   },
-  // Allow Cloudflare to handle rewrites
-  trailingSlash: false,
+  // Temporarily disable trailing slash handling
+  // trailingSlash: false,
 };
 
 module.exports = nextConfig; 

@@ -8,15 +8,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-gray-100 dark:border-neutral-800 py-12">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* About section */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">About Me</h3>
-            <p className="text-secondary dark:text-accent-dark">
-              Web developer passionate about creating modern, responsive web applications using the latest technologies. Cybersecurity & Network Enthusiast | Mobile & Web Developer | Passionate About AI & Machine Learning
-            </p>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
           {/* Social links */}
           <div>
             <h3 className="text-lg font-semibold mb-4 font-serif text-primary dark:text-text-dark">Connect</h3>

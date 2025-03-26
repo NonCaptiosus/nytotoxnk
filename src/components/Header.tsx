@@ -21,7 +21,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <nav>
               <ul className="flex space-x-6 font-medium">
                 <li>
@@ -48,9 +48,27 @@ export default function Header() {
                     Projects
                   </Link>
                 </li>
+                <li>
+                  <Link 
+                    href="/about" 
+                    className={`hover:text-secondary dark:hover:text-accent-dark ${isActive('/about') ? 'text-primary font-semibold dark:text-text-dark' : 'text-secondary dark:text-accent-dark'}`}
+                  >
+                    About Me
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/create-post" 
+                    className={`hover:text-secondary dark:hover:text-accent-dark ${isActive('/create-post') ? 'text-primary font-semibold dark:text-text-dark' : 'text-secondary dark:text-accent-dark'}`}
+                  >
+                    New Post
+                  </Link>
+                </li>
               </ul>
             </nav>
-            <ThemeSwitcher />
+            <div className="border-l border-gray-200 dark:border-neutral-700 pl-6">
+              <ThemeSwitcher />
+            </div>
           </div>
         </div>
       </div>
