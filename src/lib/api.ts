@@ -5,6 +5,10 @@ const API_TOKEN = '100e11ea0f87724622e73e2d3ec69bb145dcb89cf81e9c46e0f1ff71fda18
 
 // Get the base URL for API requests
 const getBaseUrl = () => {
+  // Support for both production and development environments
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://127.0.0.1:8787';
+  }
   return 'https://web-bot.aldodiku.workers.dev';
 };
 
@@ -67,8 +71,6 @@ export async function fetchPosts(): Promise<Post[]> {
       headers: {
         'Content-Type': 'application/json',
       },
-      // Add timeout to prevent long-hanging requests
-      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {
@@ -113,8 +115,6 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
       headers: {
         'Content-Type': 'application/json',
       },
-      // Add timeout to prevent long-hanging requests
-      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {

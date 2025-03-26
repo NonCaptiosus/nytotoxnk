@@ -1,10 +1,49 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchPosts, Post } from '../lib/api';
 
 export const runtime = 'edge';
 
-export default async function Home() {
-  const posts = await fetchPosts();
+export default function Home() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    async function loadPosts() {
+      try {
+        const data = await fetchPosts();
+        setPosts(data);
+      } catch (e) {
+        console.error('Error loading posts:', e);
+        setError('Failed to load posts');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadPosts();
+  }, []);
+  
+  if (loading) {
+    return (
+      <div className="space-y-12">
+        <section>
+          <h1 className="text-4xl font-bold mb-4 font-serif text-primary dark:text-text-dark">Welcome to My Blog</h1>
+          <p className="text-xl mb-6 text-secondary dark:text-accent-dark">
+            Exploring web development, cloud technologies, cybersecurity & networking, IoT, AI & Machine Learning
+          </p>
+          <div className="flex gap-4">
+            <div className="bg-primary text-white px-6 py-2 rounded dark:bg-accent-dark dark:text-background-dark">
+              Loading...
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-12">
@@ -56,7 +95,11 @@ export default async function Home() {
                 </p>
                 <div className="flex justify-between items-center text-sm text-secondary dark:text-accent-dark">
                   <span>
-                    {new Date(post.createdAt || '').toLocaleDateString()}
+                    {post.created 
+                      ? new Date(post.created).toLocaleDateString()
+                      : post.createdAt 
+                        ? new Date(post.createdAt).toLocaleDateString() 
+                        : ''}
                   </span>
                   <Link 
                     href={`/blogs/${post.slug}`} 
@@ -69,7 +112,7 @@ export default async function Home() {
             ))
           ) : (
             <p className="col-span-3 text-center py-8 text-secondary dark:text-accent-dark">
-              No posts found. Check back soon!
+              {error || "No posts found. Check back soon!"}
             </p>
           )}
         </div>
