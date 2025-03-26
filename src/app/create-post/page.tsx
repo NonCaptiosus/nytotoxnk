@@ -105,7 +105,7 @@ export default function CreatePostPage() {
         
         // Redirect to the new post after a short delay
         setTimeout(() => {
-          router.push(`/blogs/${result.slug}`);
+          router.push(`/blogs/${result.post.slug}`);
         }, 1500);
       } else {
         throw new Error('Failed to create post: No response data received');
