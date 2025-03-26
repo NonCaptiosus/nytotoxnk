@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 // Define the expected request body type
 interface CreatePostRequest {
   post: {

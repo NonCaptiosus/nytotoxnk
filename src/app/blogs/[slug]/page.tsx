@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchPostBySlug, Post } from '@/lib/api';
 
+export const runtime = 'edge';
+
 export default function BlogPostPage() {
   const { slug } = useParams();
   const [post, setPost] = useState<Post | null>(null);
