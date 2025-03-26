@@ -107,9 +107,10 @@ export default function BlogPostPage() {
         
         <div className="prose max-w-none">
           {/* Split content by paragraphs and render */}
-          {post.content.split('\n\n').map((paragraph, index) => (
+          {post.content && post.content.split('\n\n').map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}
+          {!post.content && <p>This post has no content.</p>}
         </div>
       </article>
       

@@ -82,16 +82,16 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts && posts.length > 0 ? (
             posts.slice(0, 3).map((post: Post) => (
-              <div key={post.id} className="dark:bg-card-dark p-6">
+              <div key={post.id || post.slug} className="dark:bg-card-dark p-6">
                 <h3 className="text-xl font-bold mb-2 hover:text-secondary transition-colors font-serif text-primary dark:text-text-dark">
                   <Link href={`/blogs/${post.slug}`}>
                     {post.title}
                   </Link>
                 </h3>
                 <p className="text-secondary dark:text-accent-dark mb-4">
-                  {post.content.length > 150 
+                  {post.content && post.content.length > 150 
                     ? `${post.content.substring(0, 150)}...` 
-                    : post.content}
+                    : post.content || ''}
                 </p>
                 <div className="flex justify-between items-center text-sm text-secondary dark:text-accent-dark">
                   <span>

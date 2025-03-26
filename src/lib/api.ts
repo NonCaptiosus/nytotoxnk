@@ -86,10 +86,13 @@ export async function fetchPosts(): Promise<Post[]> {
       return FALLBACK_POSTS;
     }
     
-    // Filter out any invalid posts and ensure tags is always an array
+    // Filter out any invalid posts and ensure all properties are normalized
     const validPosts = data.filter(post => post && typeof post === 'object' && post.title && post.slug)
       .map(post => ({
         ...post,
+        id: post.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        content: post.content || '',
+        author: post.author || 'Anonymous',
         tags: Array.isArray(post.tags) ? post.tags : []
       }));
     
@@ -129,7 +132,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
 
     const data = await response.json() as Post;
     
-    // Ensure the post has valid structure and tags is always an array
+    // Ensure the post has valid structure and normalize all properties
     if (!data || typeof data !== 'object' || !data.title || !data.slug) {
       console.error(`Invalid post data received for slug ${slug}:`, data);
       return fallbackPost || null;
@@ -138,6 +141,9 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     // Normalize the post data
     return {
       ...data,
+      id: data.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      content: data.content || '',
+      author: data.author || 'Anonymous',
       tags: Array.isArray(data.tags) ? data.tags : []
     };
   } catch (error) {
