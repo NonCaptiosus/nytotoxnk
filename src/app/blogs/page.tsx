@@ -6,11 +6,6 @@ import { fetchPosts, Post } from '../../lib/api';
 
 export const runtime = 'edge';
 
-export const metadata = {
-  title: 'Blog Posts',
-  description: 'Read all my blog posts about web development and technology',
-};
-
 export default function BlogsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
