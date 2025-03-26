@@ -8,6 +8,24 @@ const getBaseUrl = () => {
   return 'https://web-bot.aldodiku.workers.dev';
 };
 
+// Mock data for fallback when API is unavailable
+const FALLBACK_POSTS = [
+  {
+    id: 'fallback-1',
+    title: 'Getting Started with Next.js',
+    slug: 'getting-started-with-nextjs',
+    content: 'Next.js is a powerful React framework that makes building web applications simple and efficient. This post explores the basics of getting started with Next.js and its key features like server-side rendering, static site generation, and API routes.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'fallback-2',
+    title: 'Cloudflare Workers for Beginners',
+    slug: 'cloudflare-workers-for-beginners',
+    content: 'Cloudflare Workers allows you to run serverless JavaScript at the edge. This tutorial walks through deploying your first Worker and explains key concepts for building highly available APIs.',
+    createdAt: new Date().toISOString(),
+  }
+];
+
 // Post interface
 export interface Post {
   id?: string;
@@ -29,6 +47,12 @@ interface ErrorResponse {
   [key: string]: any;
 }
 
+interface CreatePostResponse {
+  post: Post;
+  success: boolean;
+  message?: string;
+}
+
 /**
  * Fetch all blog posts
  */
@@ -39,9 +63,12 @@ export async function fetchPosts(): Promise<Post[]> {
       headers: {
         'Content-Type': 'application/json',
       },
+      // Add timeout to prevent long-hanging requests
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {
+      console.error(`API returned status: ${response.status}`);
       throw new Error(`API error: ${response.status}`);
     }
 
@@ -49,7 +76,9 @@ export async function fetchPosts(): Promise<Post[]> {
     return data || [];
   } catch (error) {
     console.error('Error fetching posts:', error);
-    return [];
+    // Return fallback posts when API fails
+    console.log('Using fallback posts due to API error');
+    return FALLBACK_POSTS;
   }
 }
 
@@ -58,14 +87,25 @@ export async function fetchPosts(): Promise<Post[]> {
  */
 export async function fetchPostBySlug(slug: string): Promise<Post | null> {
   try {
+    // Find a fallback post if it exists for this slug
+    const fallbackPost = FALLBACK_POSTS.find(post => post.slug === slug);
+    
     const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      // Add timeout to prevent long-hanging requests
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {
+      console.error(`API returned status for slug ${slug}: ${response.status}`);
+      // If we have a fallback post with this slug, return it
+      if (fallbackPost) {
+        console.log(`Using fallback post for slug ${slug}`);
+        return fallbackPost;
+      }
       throw new Error(`API error: ${response.status}`);
     }
 
@@ -73,6 +113,14 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     return data || null;
   } catch (error) {
     console.error(`Error fetching post with slug ${slug}:`, error);
+    
+    // Return fallback post if exists
+    const fallbackPost = FALLBACK_POSTS.find(post => post.slug === slug);
+    if (fallbackPost) {
+      console.log(`Using fallback post for slug ${slug} due to API error`);
+      return fallbackPost;
+    }
+    
     return null;
   }
 }

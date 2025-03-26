@@ -54,7 +54,7 @@ const jsonResponse = (data: any, status = 200) => {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
     },
     status,
   });
@@ -68,7 +68,7 @@ router.options('*', () => {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
       'Access-Control-Max-Age': '86400',
     },
   });
@@ -142,7 +142,7 @@ router.get('/api/posts/:slug', async (request: IRequest, env: Env) => {
       }
     }
     
-    return jsonResponse({ error: 'Post not found' }, 404);
+    return jsonResponse({ error: 'Post not found', post: null }, 404);
   } catch (error) {
     console.error('Error fetching post by slug:', error);
     return jsonResponse({ error: 'Failed to fetch post' }, 500);
@@ -213,7 +213,7 @@ router.put('/api/posts/:id', async (request: IRequest, env: Env) => {
   try {
     // Check authentication
     if (!authenticateRequest(request, env)) {
-      return jsonResponse({ error: 'Unauthorized' }, 401);
+      return jsonResponse({ error: 'Unauthorized', success: false }, 401);
     }
     
     const { id } = request.params;
@@ -237,7 +237,7 @@ router.put('/api/posts/:id', async (request: IRequest, env: Env) => {
     }
     
     if (!existingPost) {
-      return jsonResponse({ error: 'Post not found' }, 404);
+      return jsonResponse({ error: 'Post not found', success: false }, 404);
     }
     
     // Update the post
@@ -255,7 +255,11 @@ router.put('/api/posts/:id', async (request: IRequest, env: Env) => {
       return jsonResponse({ error: 'Failed to update post in database' }, 500);
     }
     
-    return jsonResponse(updatedPost);
+    return jsonResponse({ 
+      post: updatedPost,
+      success: true,
+      message: 'Post updated successfully'
+    });
   } catch (error) {
     console.error('Error updating post:', error);
     return jsonResponse({ error: 'Failed to update post' }, 500);
@@ -267,7 +271,7 @@ router.delete('/api/posts/:id', async (request: IRequest, env: Env) => {
   try {
     // Check authentication
     if (!authenticateRequest(request, env)) {
-      return jsonResponse({ error: 'Unauthorized' }, 401);
+      return jsonResponse({ error: 'Unauthorized', success: false }, 401);
     }
     
     const { id } = request.params;
@@ -282,7 +286,7 @@ router.delete('/api/posts/:id', async (request: IRequest, env: Env) => {
     }
     
     if (!post) {
-      return jsonResponse({ error: 'Post not found' }, 404);
+      return jsonResponse({ error: 'Post not found', success: false }, 404);
     }
     
     // Delete the post
@@ -293,7 +297,7 @@ router.delete('/api/posts/:id', async (request: IRequest, env: Env) => {
       return jsonResponse({ error: 'Failed to delete post from database' }, 500);
     }
     
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
     return jsonResponse({ error: 'Failed to delete post' }, 500);

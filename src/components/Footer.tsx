@@ -38,7 +38,6 @@ export default function Footer() {
             </div>
           </div>
         </div>
-
         <div className="mt-8 pt-8 border-t border-gray-100 dark:border-neutral-800 text-center text-secondary dark:text-accent-dark">
           <p>© {currentYear} nytotoxNK. All rights reserved.</p>
         </div>

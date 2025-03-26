@@ -5,16 +5,37 @@ import { useTheme } from 'next-themes'
 
 export default function ThemeSwitcher() {
   const [mounted, setMounted] = useState(false)
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme, resolvedTheme } = useTheme()
 
   // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // If not mounted yet, render a placeholder button to avoid layout shift
   if (!mounted) {
-    return null
+    return (
+      <button
+        className="p-2 rounded-full transition-colors"
+        aria-label="Theme loading"
+        disabled
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-5 w-5 text-gray-400" 
+          viewBox="0 0 20 20" 
+          fill="currentColor"
+        >
+          <path 
+            d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" 
+          />
+        </svg>
+      </button>
+    )
   }
+
+  // Use resolvedTheme instead of theme to get the actual applied theme
+  const currentTheme = resolvedTheme || theme
 
   return (
     <button
@@ -23,11 +44,11 @@ export default function ThemeSwitcher() {
       aria-label="Toggle theme"
       title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {theme === 'dark' ? (
+      {currentTheme === 'dark' ? (
         // Sun icon for dark mode
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className="h-5 w-5 text-accent-dark" 
+          className="h-5 w-5 text-white" 
           viewBox="0 0 20 20" 
           fill="currentColor"
         >
@@ -41,7 +62,7 @@ export default function ThemeSwitcher() {
         // Moon icon for light mode
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className="h-5 w-5 text-primary" 
+          className="h-5 w-5 text-black" 
           viewBox="0 0 20 20" 
           fill="currentColor"
         >
