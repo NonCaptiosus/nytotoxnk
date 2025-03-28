@@ -72,7 +72,7 @@ export default function BlogsPage() {
           {posts.map((post: Post) => (
             <article 
               key={post.id} 
-              className="p-6 dark:bg-card-dark"
+              className="p-6 dark:bg-card-dark rounded-lg"
             >
               <h2 className="text-2xl font-bold mb-3 hover:text-secondary transition-colors font-serif text-primary dark:text-text-dark">
                 <Link href={`/blogs/${post.slug}`}>
@@ -115,7 +115,7 @@ export default function BlogsPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 dark:bg-card-dark">
+        <div className="text-center py-16 dark:bg-card-dark rounded-lg">
           <h2 className="text-2xl font-semibold mb-2 font-serif text-primary dark:text-text-dark">No posts yet</h2>
           <p className="text-secondary dark:text-accent-dark mb-6">
             Check back soon for new content!

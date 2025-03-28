@@ -80,7 +80,7 @@ export default function BlogPostPage() {
         <header className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h1>
           
-          <div className="flex items-center text-gray-600 mb-4">
+          <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4">
             <span className="mr-4">By {post.author || 'Anonymous'}</span>
             {post.created && <time>{formatDate(post.created)}</time>}
             {post.createdAt && !post.created && (
@@ -105,18 +105,24 @@ export default function BlogPostPage() {
           )}
         </header>
         
-        <div className="prose max-w-none">
+        <div className="prose max-w-none dark:prose-invert">
           {/* Split content by paragraphs and render */}
           {post.content && post.content.split('\n\n').map((paragraph, index) => (
-            <p key={index}>{paragraph}</p>
+            <p key={index} className="dark:text-gray-200">{paragraph}</p>
           ))}
-          {!post.content && <p>This post has no content.</p>}
+          {!post.content && <p className="dark:text-gray-200">This post has no content.</p>}
         </div>
       </article>
       
-      <div className="mt-12 pt-6 border-t">
-        <Link href="/blogs" className="text-blue-600 hover:underline">
-          ← Back to all posts
+      <div className="mt-12">
+        <Link 
+          href="/blogs" 
+          className="inline-flex items-center px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors dark:bg-card-dark dark:text-text-dark dark:hover:bg-accent-dark/30"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          Back to all posts
         </Link>
       </div>
     </div>
