@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchPostBySlug, Post } from '@/lib/api';
+import { usePostsContext } from '@/providers/PostsProvider';
 
 export const runtime = 'edge';
 
@@ -12,6 +13,7 @@ export default function BlogPostPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { getPostBySlug } = usePostsContext();
 
   useEffect(() => {
     const loadPost = async () => {
@@ -20,6 +22,15 @@ export default function BlogPostPage() {
           throw new Error('Invalid slug');
         }
         
+        // First try to get the post from context
+        const cachedPost = getPostBySlug(slug);
+        if (cachedPost) {
+          setPost(cachedPost);
+          setLoading(false);
+          return;
+        }
+        
+        // If not in context, fetch it
         const data = await fetchPostBySlug(slug);
         if (!data) {
           throw new Error('Post not found');
@@ -34,7 +45,7 @@ export default function BlogPostPage() {
     };
 
     loadPost();
-  }, [slug]);
+  }, [slug, getPostBySlug]);
 
   // Function to format date
   const formatDate = (timestamp: number) => {

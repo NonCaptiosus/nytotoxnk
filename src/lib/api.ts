@@ -1,4 +1,5 @@
 // This file provides utilities for interacting with the Cloudflare Worker API
+import { postsCache } from './postsCache';
 
 // Use a simpler token for local development
 const API_TOKEN = '100e11ea0f87724622e73e2d3ec69bb145dcb89cf81e9c46e0f1ff71fda18a55';
@@ -65,6 +66,12 @@ interface CreatePostResponse {
  * Fetch all blog posts
  */
 export async function fetchPosts(): Promise<Post[]> {
+  // Try to get posts from cache first
+  const cachedPosts = postsCache.getPosts();
+  if (cachedPosts) {
+    return cachedPosts;
+  }
+  
   try {
     const response = await fetch(`${getBaseUrl()}/api/blog`, {
       method: 'GET',
@@ -96,7 +103,12 @@ export async function fetchPosts(): Promise<Post[]> {
         tags: Array.isArray(post.tags) ? post.tags : []
       }));
     
-    return validPosts.length > 0 ? validPosts : FALLBACK_POSTS;
+    const posts = validPosts.length > 0 ? validPosts : FALLBACK_POSTS;
+    
+    // Save posts to cache
+    postsCache.setPosts(posts);
+    
+    return posts;
   } catch (error) {
     console.error('Error fetching posts:', error);
     // Return fallback posts when API fails
@@ -109,10 +121,30 @@ export async function fetchPosts(): Promise<Post[]> {
  * Fetch a single blog post by slug
  */
 export async function fetchPostBySlug(slug: string): Promise<Post | null> {
+  // Try to get post from cache first
+  const cachedPost = postsCache.getPostBySlug(slug);
+  if (cachedPost) {
+    return cachedPost;
+  }
+  
   try {
     // Find a fallback post if it exists for this slug
     const fallbackPost = FALLBACK_POSTS.find(post => post.slug === slug);
     
+    // Try to get all posts first (to populate cache) if cache is empty
+    const cachedPosts = postsCache.getPosts();
+    if (!cachedPosts) {
+      // This will populate the cache with all posts
+      const allPosts = await fetchPosts();
+      
+      // Check if we now have the post in the cache
+      const newlyCachedPost = postsCache.getPostBySlug(slug);
+      if (newlyCachedPost) {
+        return newlyCachedPost;
+      }
+    }
+    
+    // If still not in cache, fetch directly by slug
     const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
       method: 'GET',
       headers: {
@@ -139,13 +171,30 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     }
     
     // Normalize the post data
-    return {
+    const post = {
       ...data,
       id: data.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       content: data.content || '',
       author: data.author || 'Anonymous',
       tags: Array.isArray(data.tags) ? data.tags : []
     };
+    
+    // Update the cache with this post
+    // We'll get all posts, add/update this one, and save back to cache
+    const posts = postsCache.getPosts() || [];
+    const postIndex = posts.findIndex(p => p.slug === slug);
+    
+    if (postIndex >= 0) {
+      // Update existing post
+      posts[postIndex] = post;
+    } else {
+      // Add new post
+      posts.push(post);
+    }
+    
+    postsCache.setPosts(posts);
+    
+    return post;
   } catch (error) {
     console.error(`Error fetching post with slug ${slug}:`, error);
     
@@ -235,18 +284,21 @@ export async function createPost(post: Post): Promise<CreatePostResponse> {
       throw new Error(errorMessage);
     }
 
-    try {
-      const data = await response.json() as Post;
-      console.log('Post created successfully with ID:', data.id);
-      return {
-        post: data,
-        success: true,
-        message: 'Post created successfully'
-      };
-    } catch (parseError) {
-      console.error('Error parsing successful response:', parseError);
-      throw new Error('API error: Failed to parse server response');
+    // Parse the successful response
+    const result = await response.json() as CreatePostResponse;
+    console.log('Post created successfully:', result);
+    
+    // Clear the posts cache after creating a new post
+    if (typeof window !== 'undefined') {
+      try {
+        // Clear the cache to ensure we fetch fresh data next time
+        postsCache.clearCache();
+      } catch (error) {
+        console.error('Error clearing cache after post creation:', error);
+      }
     }
+    
+    return result;
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
       console.error('Connection error - unable to reach API server');

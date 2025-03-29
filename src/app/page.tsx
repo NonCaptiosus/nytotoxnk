@@ -1,31 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
-import { fetchPosts, Post } from '../lib/api';
+import { usePostsContext } from '../providers/PostsProvider';
 
 export const runtime = 'edge';
 
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    async function loadPosts() {
-      try {
-        const data = await fetchPosts();
-        setPosts(data);
-      } catch (e) {
-        console.error('Error loading posts:', e);
-        setError('Failed to load posts');
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    loadPosts();
-  }, []);
+  const { posts, loading, error } = usePostsContext();
   
   if (loading) {
     return (
@@ -81,8 +63,8 @@ export default function Home() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts && posts.length > 0 ? (
-            posts.slice(0, 3).map((post: Post) => (
-              <div key={post.id || post.slug} className="dark:bg-card-dark p-6">
+            posts.slice(0, 3).map((post) => (
+              <div key={post.id || post.slug} className="dark:bg-card-dark p-6 rounded-lg">
                 <h3 className="text-xl font-bold mb-2 hover:text-secondary transition-colors font-serif text-primary dark:text-text-dark">
                   <Link href={`/blogs/${post.slug}`}>
                     {post.title}

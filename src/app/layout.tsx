@@ -4,6 +4,7 @@ import { Libre_Baskerville, Montserrat } from 'next/font/google';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { ThemeProvider } from '../components/ThemeProvider';
+import { PostsProvider } from '../providers/PostsProvider';
 
 const libre = Libre_Baskerville({ 
   weight: ['400', '700'],
@@ -31,13 +32,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${libre.variable} ${montserrat.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <PostsProvider>
+            <div className="min-h-screen flex flex-col">
+              <Header />
+              <main className="flex-grow container mx-auto px-4 py-8">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </PostsProvider>
         </ThemeProvider>
       </body>
     </html>
