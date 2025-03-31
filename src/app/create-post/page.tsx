@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPost, Post } from '@/lib/api';
+import { useAuth } from '@/lib/authContext';
 
 export default function CreatePostPage() {
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Post>({
     title: '',
@@ -18,6 +20,13 @@ export default function CreatePostPage() {
   const [success, setSuccess] = useState<boolean>(false);
   const [lastSubmitTime, setLastSubmitTime] = useState<number | null>(null);
   const [contentLength, setContentLength] = useState<number>(0);
+
+  // Check authentication and redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
     setContentLength(formData.content.length);

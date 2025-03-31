@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { PostsProvider } from '../providers/PostsProvider';
+import { AuthProvider } from '../lib/authContext';
 
 const libre = Libre_Baskerville({ 
   weight: ['400', '700'],
@@ -32,15 +33,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${libre.variable} ${montserrat.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <PostsProvider>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-grow container mx-auto px-4 py-8">
-                {children}
-              </main>
-              <Footer />
-            </div>
-          </PostsProvider>
+          <AuthProvider>
+            <PostsProvider>
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-grow container mx-auto px-4 py-8">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </PostsProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

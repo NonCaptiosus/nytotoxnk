@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ThemeSwitcher from './ThemeSwitcher';
+import { useAuth } from '@/lib/authContext';
 
 export default function Header() {
   const pathname = usePathname();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -56,18 +58,41 @@ export default function Header() {
                     About Me
                   </Link>
                 </li>
-                <li>
-                  <Link 
-                    href="/create-post" 
-                    className={`hover:text-secondary dark:hover:text-accent-dark ${isActive('/create-post') ? 'text-primary font-semibold dark:text-text-dark' : 'text-secondary dark:text-accent-dark'}`}
-                  >
-                    New Post
-                  </Link>
-                </li>
+                {isAuthenticated && (
+                  <li>
+                    <Link 
+                      href="/create-post" 
+                      className={`hover:text-secondary dark:hover:text-accent-dark ${isActive('/create-post') ? 'text-primary font-semibold dark:text-text-dark' : 'text-secondary dark:text-accent-dark'}`}
+                    >
+                      New Post
+                    </Link>
+                  </li>
+                )}
               </ul>
             </nav>
-            <div className="border-l border-gray-200 dark:border-neutral-700 pl-6">
+            <div className="border-l border-gray-200 dark:border-neutral-700 pl-6 flex items-center space-x-4">
               <ThemeSwitcher />
+              
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-secondary dark:text-accent-dark">
+                    {user?.username}
+                  </span>
+                  <button 
+                    onClick={logout} 
+                    className="text-sm text-primary hover:text-secondary dark:text-accent-dark dark:hover:text-text-dark"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link 
+                  href="/auth" 
+                  className={`text-sm hover:text-secondary dark:hover:text-accent-dark ${isActive('/auth') ? 'text-primary font-semibold dark:text-text-dark' : 'text-secondary dark:text-accent-dark'}`}
+                >
+                  Login / Register
+                </Link>
+              )}
             </div>
           </div>
         </div>

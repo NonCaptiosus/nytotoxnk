@@ -5,7 +5,7 @@ import { postsCache } from './postsCache';
 const API_TOKEN = '100e11ea0f87724622e73e2d3ec69bb145dcb89cf81e9c46e0f1ff71fda18a55';
 
 // Get the base URL for API requests
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
   // Support for both production and development environments
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return 'http://127.0.0.1:8787';

@@ -56,7 +56,7 @@ export default function ProjectsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {projects.map((project) => (
-          <div key={project.id} className="p-6 dark:bg-card-dark">
+          <div key={project.id} className="p-6 dark:bg-card-dark rounded-lg">
             <h2 className="text-2xl font-bold mb-2 text-primary dark:text-text-dark font-serif">{project.title}</h2>
             <p className="text-secondary dark:text-accent-dark mb-4">{project.description}</p>
             
