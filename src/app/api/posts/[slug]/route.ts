@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
+import { FALLBACK_POSTS } from '@/lib/data';
 
 export const runtime = 'edge';
 
@@ -85,6 +87,119 @@ export async function GET(
     console.error(`GET /api/posts/${params.slug}: Unhandled server-side error:`, error);
     return NextResponse.json(
       { error: 'An unexpected server error occurred' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    // Check authentication
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const { slug } = params;
+    const data = await request.json() as { title: string; content: string; author?: string; tags?: string[] };
+
+    // Simple validation
+    if (!data.title || !data.content) {
+      return NextResponse.json(
+        { error: 'Title and content are required' },
+        { status: 400 }
+      );
+    }
+
+    // Convert to CF Workers API URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://myworker.aldo.workers.dev';
+    
+    // Send request to update the post
+    const response = await fetch(`${apiUrl}/posts/${slug}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.user.token}`
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json() as { message?: string };
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to update post' },
+        { status: response.status }
+      );
+    }
+
+    const updatedPost = await response.json();
+    return NextResponse.json(updatedPost);
+  } catch (error) {
+    console.error('Error updating post:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    // Check authentication
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const { slug } = params;
+
+    // Prevent deletion of fallback posts in development
+    if (process.env.NODE_ENV === 'development') {
+      const isFallbackPost = FALLBACK_POSTS.some((post: { slug: string }) => post.slug === slug);
+      if (isFallbackPost) {
+        return NextResponse.json(
+          { error: 'Cannot delete fallback posts in development mode' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Convert to CF Workers API URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://myworker.aldo.workers.dev';
+    
+    // Send request to delete the post
+    const response = await fetch(`${apiUrl}/posts/${slug}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.user.token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json() as { message?: string };
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to delete post' },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
