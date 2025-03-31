@@ -1,9 +1,13 @@
-name = "blog-api"
-main = "src/worker/index.ts"
-compatibility_date = "2023-11-15"
+name = "nytotoxnk"
+compatibility_date = "2024-03-31"
+main = ".vercel/output/functions/_worker.js"
+pages_build_output_dir = ".vercel/output"
 
 [site]
-bucket = ".next/static"
+bucket = ".vercel/output/static"
+
+[build]
+command = "npm run build && npx @cloudflare/next-on-pages"
 
 [[kv_namespaces]]
 binding = "BLOG_DATA"

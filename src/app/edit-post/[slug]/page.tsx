@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { fetchPostBySlug, Post } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 
+export const runtime = 'edge';
+
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();

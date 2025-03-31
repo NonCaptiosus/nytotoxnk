@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
 
+export const runtime = 'edge';
+
 // Project interface
 interface Project {
   id?: string;
