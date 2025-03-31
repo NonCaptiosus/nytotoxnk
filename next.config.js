@@ -2,20 +2,24 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Temporarily disable output standalone for development
-  // output: 'standalone',
+  output: 'export',
   // Enable image optimization for Cloudflare Pages
   images: {
     unoptimized: true,
     domains: ['blog-api.aldodiku.workers.dev'],
   },
-  // Temporarily disable trailing slash handling
-  // trailingSlash: false,
+  // Explicitly set trailing slash handling
+  trailingSlash: true,
   
   // Set ESLint to only fail on errors, not warnings
   eslint: {
     ignoreDuringBuilds: true,
-  }
+  },
+  
+  // Add experimental features for Edge runtime
+  experimental: {
+    serverActions: true,
+  },
 };
 
 module.exports = nextConfig; 

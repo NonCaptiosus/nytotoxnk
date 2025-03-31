@@ -1,4 +1,8 @@
 # Build configuration for Cloudflare Pages
 [build]
 command = "npm run build && npx @cloudflare/next-on-pages"
-output_directory = ".vercel/output" 
+output_directory = ".vercel/output"
+
+[site]
+bucket = ".vercel/output/static"
+entry-point = ".vercel/output/static/_worker.js" 
