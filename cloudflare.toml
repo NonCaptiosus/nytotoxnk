@@ -1,0 +1,10 @@
+# Cloudflare Pages configuration
+name = "nytotoxnk"
+
+[build]
+command = "npm run cloudflare:build"
+environment = { NODE_VERSION = "18" }
+
+[build.environment]
+CLOUDFLARE_API_TOKEN = true
+NODE_ENV = "production" 

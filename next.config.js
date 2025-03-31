@@ -2,13 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  output: 'export',
   // Enable image optimization for Cloudflare Pages
   images: {
     unoptimized: true,
     domains: ['blog-api.aldodiku.workers.dev'],
   },
-  // Explicitly set trailing slash handling
+  // Use trailing slash for better Cloudflare compatibility
   trailingSlash: true,
   
   // Set ESLint to only fail on errors, not warnings

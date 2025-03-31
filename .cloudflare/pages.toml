@@ -1,7 +1,7 @@
 # Build configuration for Cloudflare Pages
 [build]
-command = "npm run build && npx @cloudflare/next-on-pages"
-output_directory = ".vercel/output"
+command = "npm run cloudflare:build"
+environment = { NODE_VERSION = "18" }
 
 [site]
 bucket = ".vercel/output/static"

@@ -7,6 +7,7 @@
     "worker:dev": "cd src/worker && wrangler dev --local",
     "dev:all": "npm run worker:dev & npm run dev",
     "build": "next build",
+    "cloudflare:build": "npm run build && npx @cloudflare/next-on-pages",
     "pages:build": "npm run build && npx @cloudflare/next-on-pages",
     "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-date=2024-03-31 --compatibility-flag=nodejs_compat",
     "pages:deploy": "npm run pages:build && npx wrangler pages deploy .vercel/output/static",
