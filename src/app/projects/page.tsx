@@ -6,11 +6,6 @@ import { useAuth } from '@/lib/authContext';
 
 export const runtime = 'edge';
 
-export const metadata = {
-  title: 'Projects',
-  description: 'Check out my web development and cloud projects',
-};
-
 // Project type definition
 interface Project {
   id?: string;

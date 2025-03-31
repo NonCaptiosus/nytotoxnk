@@ -2,10 +2,8 @@ import Link from 'next/link';
 
 export const runtime = 'edge';
 
-export const metadata = {
-  title: 'Page Not Found',
-  description: 'The page you are looking for does not exist.',
-};
+// Metadata should be defined in a layout file
+// Removing metadata export to fix build errors
 
 export default function NotFound() {
   return (
