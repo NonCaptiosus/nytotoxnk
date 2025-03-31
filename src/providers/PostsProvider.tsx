@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, ReactNode } from 'react';
 import { usePosts } from '@/lib/usePosts';
 import { Post } from '@/lib/api';

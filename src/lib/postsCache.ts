@@ -1,3 +1,5 @@
+'use client';
+
 import { Post } from './api';
 
 // Cache interface
