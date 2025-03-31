@@ -9,7 +9,8 @@ import { usePostsContext } from '@/providers/PostsProvider';
 export const runtime = 'edge';
 
 export default function BlogPostPage() {
-  const { slug } = useParams();
+  const params = useParams();
+  const slug = params?.slug;
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

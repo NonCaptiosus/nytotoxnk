@@ -2,7 +2,3 @@
 [build]
 command = "npm run cloudflare:build"
 environment = { NODE_VERSION = "18" }
-
-[site]
-bucket = ".vercel/output/static"
-entry-point = ".vercel/output/static/_worker.js" 

@@ -11,6 +11,7 @@ export const runtime = 'edge';
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();
+  const slug = params?.slug;
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,14 +36,14 @@ export default function EditPostPage() {
   // Load post data
   useEffect(() => {
     const loadPost = async () => {
-      if (!params.slug || typeof params.slug !== 'string') {
+      if (!slug || typeof slug !== 'string') {
         setError('Invalid post slug');
         setIsLoading(false);
         return;
       }
 
       try {
-        const post = await fetchPostBySlug(params.slug);
+        const post = await fetchPostBySlug(slug);
         if (!post) {
           setError('Post not found');
           setIsLoading(false);
@@ -68,7 +69,7 @@ export default function EditPostPage() {
     if (isAuthenticated && !authLoading) {
       loadPost();
     }
-  }, [params.slug, isAuthenticated, authLoading]);
+  }, [slug, isAuthenticated, authLoading]);
 
   useEffect(() => {
     setContentLength(formData.content.length);
@@ -132,7 +133,7 @@ export default function EditPostPage() {
         contentLength: formData.content.length 
       });
 
-      const response = await fetch(`/api/posts/${params.slug}`, {
+      const response = await fetch(`/api/posts/${slug}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -316,7 +317,7 @@ export default function EditPostPage() {
           </button>
           
           <Link
-            href={`/blogs/${params.slug}`}
+            href={`/blogs/${slug}`}
             className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
           >
             Cancel

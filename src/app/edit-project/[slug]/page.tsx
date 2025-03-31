@@ -23,6 +23,7 @@ interface Project {
 export default function EditProjectPage() {
   const router = useRouter();
   const params = useParams();
+  const slug = params?.slug;
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,14 +47,14 @@ export default function EditProjectPage() {
   // Load project data
   useEffect(() => {
     const loadProject = async () => {
-      if (!params.slug || typeof params.slug !== 'string') {
+      if (!slug || typeof slug !== 'string') {
         setError('Invalid project slug');
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`/api/projects/${params.slug}`);
+        const response = await fetch(`/api/projects/${slug}`);
         
         if (!response.ok) {
           throw new Error(`Error fetching project: ${response.status}`);
@@ -88,7 +89,7 @@ export default function EditProjectPage() {
     if (isAuthenticated && !authLoading) {
       loadProject();
     }
-  }, [params.slug, isAuthenticated, authLoading]);
+  }, [slug, isAuthenticated, authLoading]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -136,7 +137,7 @@ export default function EditProjectPage() {
         throw new Error('Description is required');
       }
 
-      const response = await fetch(`/api/projects/${params.slug}`, {
+      const response = await fetch(`/api/projects/${slug}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -370,7 +371,7 @@ export default function EditProjectPage() {
           </button>
           
           <Link
-            href={`/projects/${params.slug}`}
+            href={`/projects/${slug}`}
             className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
           >
             Cancel
