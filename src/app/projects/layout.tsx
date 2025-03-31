@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: 'Check out my web development and cloud projects',
 };
 
+export const runtime = 'edge';
+
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
   return children;
 } 

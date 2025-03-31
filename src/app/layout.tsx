@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   description: 'A personal blog built with Next.js and Cloudflare',
 };
 
+export const runtime = 'edge';
+
 export default function RootLayout({
   children,
 }: {

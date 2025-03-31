@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: 'Read all my blog posts about web development and technology',
 };
 
+export const runtime = 'edge';
+
 export default function BlogsLayout({ children }: { children: ReactNode }) {
   return children;
 } 

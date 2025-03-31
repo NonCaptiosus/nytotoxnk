@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { createPost, Post } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 
+export const runtime = 'edge';
+
 export default function CreateBlogPage() {
   const router = useRouter();
   const [title, setTitle] = useState('');

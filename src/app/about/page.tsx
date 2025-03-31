@@ -5,6 +5,8 @@ export const metadata = {
   description: 'Learn more about me, my skills, and my experience',
 };
 
+export const runtime = 'edge';
+
 export default function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto">

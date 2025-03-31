@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createPost, Post } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 
+export const runtime = 'edge';
+
 export default function CreatePostPage() {
   const router = useRouter();
   const { isAuthenticated, loading: authLoading } = useAuth();
