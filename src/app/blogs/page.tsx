@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePostsContext } from '../../providers/PostsProvider';
 import { useAuth } from '@/lib/authContext';
 import { useState } from 'react';
+import { deletePost } from '@/lib/api';
 
 export const runtime = 'edge';
 
@@ -25,22 +26,28 @@ export default function BlogsPage() {
 
   // Function to handle post deletion
   const handleDeletePost = async (slug: string) => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      setDeleteError('You must be logged in to delete posts');
+      return;
+    }
 
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/posts/${slug}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = await response.json() as { error?: string };
-        throw new Error(data.error || 'Failed to delete post');
+      setDeleteError(null);
+      
+      console.log(`Attempting to delete post with slug: ${slug}`);
+      
+      // Use the deletePost API function instead of direct fetch
+      const success = await deletePost(slug);
+      
+      if (success) {
+        console.log(`Successfully deleted post: ${slug}`);
+        // Reload posts after deletion
+        await reloadPosts();
+        setDeleteConfirm(null);
+      } else {
+        throw new Error('Failed to delete post');
       }
-
-      // Reload posts after deletion
-      await reloadPosts();
-      setDeleteConfirm(null);
     } catch (err) {
       console.error('Error deleting post:', err);
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete post');

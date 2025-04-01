@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { fetchPostBySlug, Post } from '@/lib/api';
+import { fetchPostBySlug, Post, updatePost } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 
 export const runtime = 'edge';
@@ -133,17 +133,14 @@ export default function EditPostPage() {
         contentLength: formData.content.length 
       });
 
-      const response = await fetch(`/api/posts/${slug}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const data = await response.json() as { error?: string };
-        throw new Error(data.error || `Failed to update post: ${response.status}`);
+      // Use the updatePost API function instead of direct fetch
+      if (typeof slug !== 'string') {
+        throw new Error('Invalid slug');
+      }
+      const updatedPost = await updatePost(slug, formData);
+      
+      if (!updatedPost) {
+        throw new Error('Failed to update post');
       }
 
       setSuccess(true);

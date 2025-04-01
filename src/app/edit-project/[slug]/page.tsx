@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
+import { updateProject } from '@/lib/api';
 
 export const runtime = 'edge';
 
@@ -137,17 +138,20 @@ export default function EditProjectPage() {
         throw new Error('Description is required');
       }
 
-      const response = await fetch(`/api/projects/${slug}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      console.log('Updating project:', { 
+        title: formData.title,
+        slug: formData.slug
       });
 
-      if (!response.ok) {
-        const data = await response.json() as { error?: string };
-        throw new Error(data.error || `Failed to update project: ${response.status}`);
+      // Use the updateProject API function instead of direct fetch
+      if (typeof slug !== 'string') {
+        throw new Error('Invalid project slug');
+      }
+      
+      const updatedProject = await updateProject(slug, formData);
+      
+      if (!updatedProject) {
+        throw new Error('Failed to update project');
       }
 
       setSuccess(true);

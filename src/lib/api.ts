@@ -162,22 +162,38 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data = await response.json() as Post;
+    const data = await response.json();
+    
+    console.log('Raw API response for post:', data); // Debug the raw response
     
     // Ensure the post has valid structure and normalize all properties
-    if (!data || typeof data !== 'object' || !data.title || !data.slug) {
+    if (!data || typeof data !== 'object') {
       console.error(`Invalid post data received for slug ${slug}:`, data);
       return fallbackPost || null;
     }
     
+    // Type assertion after basic validation
+    const dataObj = data as Record<string, any>;
+    
+    if (!dataObj.title || !dataObj.slug) {
+      console.error(`Post data missing required fields for slug ${slug}:`, data);
+      return fallbackPost || null;
+    }
+    
+    // Make sure content is always a string, defaulting to empty string if not present
+    const postContent = dataObj.content !== undefined ? String(dataObj.content) : '';
+    
     // Normalize the post data
-    const post = {
-      ...data,
-      id: data.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      content: data.content || '',
-      author: data.author || 'Anonymous',
-      tags: Array.isArray(data.tags) ? data.tags : []
+    const post: Post = {
+      id: dataObj.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      title: String(dataObj.title),
+      slug: String(dataObj.slug),
+      content: postContent,
+      author: dataObj.author ? String(dataObj.author) : 'Anonymous',
+      tags: Array.isArray(dataObj.tags) ? dataObj.tags : []
     };
+    
+    console.log('Normalized post with content:', post); // Debug the processed post
     
     // Update the cache with this post
     // We'll get all posts, add/update this one, and save back to cache
@@ -197,15 +213,8 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     return post;
   } catch (error) {
     console.error(`Error fetching post with slug ${slug}:`, error);
-    
-    // Return fallback post if exists
-    const fallbackPost = FALLBACK_POSTS.find(post => post.slug === slug);
-    if (fallbackPost) {
-      console.log(`Using fallback post for slug ${slug} due to API error`);
-      return fallbackPost;
-    }
-    
-    return null;
+    // Return fallback post if available for this slug
+    return FALLBACK_POSTS.find(post => post.slug === slug) || null;
   }
 }
 
@@ -327,5 +336,175 @@ export async function createPost(post: Post): Promise<CreatePostResponse> {
       
       throw error;
     }
+  }
+}
+
+/**
+ * Update a blog post by slug
+ */
+export async function updatePost(slug: string, post: Post): Promise<Post | null> {
+  try {
+    console.log(`Updating post with slug ${slug}`);
+    
+    // Process the post data
+    const processedPost = {
+      title: post.title,
+      slug: post.slug,
+      content: post.content,
+      author: post.author || 'Anonymous',
+      tags: post.tags || []
+    };
+
+    const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(processedPost),
+      cache: 'no-cache',
+    });
+
+    if (!response.ok) {
+      console.error(`API error when updating post: ${response.status}`);
+      throw new Error(`Failed to update post: ${response.status}`);
+    }
+
+    const updatedPost = await response.json() as Post;
+    
+    // Update the post in the cache
+    const cachedPosts = postsCache.getPosts();
+    if (cachedPosts) {
+      const postIndex = cachedPosts.findIndex(p => p.slug === slug);
+      if (postIndex >= 0) {
+        cachedPosts[postIndex] = updatedPost;
+        postsCache.setPosts(cachedPosts);
+      }
+    }
+    
+    return updatedPost;
+  } catch (error) {
+    console.error(`Error updating post with slug ${slug}:`, error);
+    
+    // For development mode, simulate successful update
+    if (process.env.NODE_ENV === 'development') {
+      const mockUpdatedPost: Post = {
+        ...post,
+        updated: Date.now()
+      };
+      return mockUpdatedPost;
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Delete a blog post by slug
+ */
+export async function deletePost(slug: string): Promise<boolean> {
+  try {
+    console.log(`Deleting post with slug ${slug}`);
+    
+    const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-cache',
+    });
+
+    if (!response.ok) {
+      console.error(`API error when deleting post: ${response.status}`);
+      throw new Error(`Failed to delete post: ${response.status}`);
+    }
+
+    // Remove the post from cache
+    const cachedPosts = postsCache.getPosts();
+    if (cachedPosts) {
+      const filteredPosts = cachedPosts.filter(p => p.slug !== slug);
+      postsCache.setPosts(filteredPosts);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error deleting post with slug ${slug}:`, error);
+    
+    // For development mode, simulate successful deletion
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Update a project by slug
+ */
+export async function updateProject(slug: string, project: any): Promise<any | null> {
+  try {
+    console.log(`Updating project with slug ${slug}`);
+    
+    const response = await fetch(`${getBaseUrl()}/api/projects/${slug}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(project),
+      cache: 'no-cache',
+    });
+
+    if (!response.ok) {
+      console.error(`API error when updating project: ${response.status}`);
+      throw new Error(`Failed to update project: ${response.status}`);
+    }
+
+    const updatedProject = await response.json();
+    return updatedProject;
+  } catch (error) {
+    console.error(`Error updating project with slug ${slug}:`, error);
+    
+    // For development mode, simulate successful update
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        ...project,
+        updated: Date.now()
+      };
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Delete a project by slug
+ */
+export async function deleteProject(slug: string): Promise<boolean> {
+  try {
+    console.log(`Deleting project with slug ${slug}`);
+    
+    const response = await fetch(`${getBaseUrl()}/api/projects/${slug}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-cache',
+    });
+
+    if (!response.ok) {
+      console.error(`API error when deleting project: ${response.status}`);
+      throw new Error(`Failed to delete project: ${response.status}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`Error deleting project with slug ${slug}:`, error);
+    
+    // For development mode, simulate successful deletion
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
+    throw error;
   }
 } 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
+import { deleteProject } from '@/lib/api';
 
 export const runtime = 'edge';
 
@@ -67,18 +68,19 @@ export default function ProjectsPage() {
     setDeleteError(null);
 
     try {
-      const response = await fetch(`/api/projects/${deleteModal.projectSlug}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = await response.json() as { error?: string };
-        throw new Error(data.error || `Failed to delete project: ${response.status}`);
+      console.log(`Attempting to delete project with slug: ${deleteModal.projectSlug}`);
+      
+      // Use the deleteProject API function instead of direct fetch
+      const success = await deleteProject(deleteModal.projectSlug);
+      
+      if (success) {
+        console.log(`Successfully deleted project: ${deleteModal.projectSlug}`);
+        // Remove the deleted project from the state
+        setProjects(projects.filter(project => project.slug !== deleteModal.projectSlug));
+        closeDeleteModal();
+      } else {
+        throw new Error('Failed to delete project');
       }
-
-      // Remove the deleted project from the state
-      setProjects(projects.filter(project => project.slug !== deleteModal.projectSlug));
-      closeDeleteModal();
     } catch (err) {
       console.error('Error deleting project:', err);
       setDeleteError(err instanceof Error ? err.message : 'An unexpected error occurred');
