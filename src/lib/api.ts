@@ -6,12 +6,30 @@ const API_TOKEN = '100e11ea0f87724622e73e2d3ec69bb145dcb89cf81e9c46e0f1ff71fda18
 
 // Get the base URL for API requests
 export const getBaseUrl = () => {
-  // Support for both production and development environments
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://127.0.0.1:8787';
+  // Check if the environment is a Cloudflare environment
+  if (typeof process !== 'undefined' && process.env.CF_PAGES) {
+    console.log('Running in Cloudflare Pages environment');
+    return ''; // Use relative URLs in Cloudflare environment
   }
+
+  // Try these endpoints in sequence to see which one works:
+  // 1. The direct production environment
   return 'https://web-bot.aldodiku.workers.dev';
+  
+  // Disabled for testing:
+  // if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+  //   return 'http://127.0.0.1:8787';
+  // }
+  // return 'https://web-bot.aldodiku.workers.dev';
 };
+
+// Alternative URLs to try for content specifically
+const CONTENT_ENDPOINTS = [
+  'https://web-bot.aldodiku.workers.dev/api/blog', // Standard API
+  'https://web-bot.aldodiku.workers.dev/api/kv/blogs', // KV-specific endpoint
+  'https://web-bot.aldodiku.workers.dev/v1/blogs', // Version-specific endpoint
+  'https://blog-api.aldodiku.workers.dev/api/blog', // Alternative domain
+];
 
 // Mock data for fallback when API is unavailable
 const FALLBACK_POSTS = [
@@ -63,6 +81,63 @@ interface CreatePostResponse {
 }
 
 /**
+ * Try to fetch content from multiple possible endpoints
+ */
+async function tryFetchContent(slug: string): Promise<string> {
+  // Try each endpoint in sequence
+  for (const baseEndpoint of CONTENT_ENDPOINTS) {
+    try {
+      const endpoint = `${baseEndpoint}/${slug}`;
+      console.log(`Trying to fetch content from: ${endpoint}`);
+      
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      
+      if (response.ok) {
+        // Try to parse as JSON first
+        const text = await response.text();
+        
+        // If successful and not empty, return the content
+        if (text && text.trim().length > 0) {
+          console.log(`Successful content fetch from ${endpoint} (length: ${text.length})`);
+          
+          // Try to parse as JSON to extract content field if possible
+          try {
+            const json = JSON.parse(text);
+            if (json && typeof json === 'object') {
+              // Check if there's a content field
+              if (json.content && typeof json.content === 'string' && json.content.trim().length > 0) {
+                console.log('Found content field in JSON response');
+                return json.content;
+              }
+              
+              // Check if there's a post field with content
+              if (json.post && typeof json.post === 'object' && json.post.content && 
+                  typeof json.post.content === 'string' && json.post.content.trim().length > 0) {
+                console.log('Found content field in post object');
+                return json.post.content;
+              }
+            }
+          } catch (jsonError) {
+            // If it's not JSON, assume it's the raw content
+            console.log('Response is not JSON, using as raw content');
+          }
+          
+          return text;
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch from ${baseEndpoint}/${slug}:`, error);
+    }
+  }
+  
+  // If all endpoints fail, return empty string
+  return '';
+}
+
+/**
  * Fetch all blog posts
  */
 export async function fetchPosts(): Promise<Post[]> {
@@ -74,8 +149,8 @@ export async function fetchPosts(): Promise<Post[]> {
   }
   
   try {
-    console.log('Fetching all posts from API');
-    const response = await fetch(`${getBaseUrl()}/api/blog`, {
+    console.log('Fetching all posts with content from API');
+    const response = await fetch(`${getBaseUrl()}/api/blog/all`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -88,50 +163,173 @@ export async function fetchPosts(): Promise<Post[]> {
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data = await response.json() as Post[];
-    console.log(`Received ${Array.isArray(data) ? data.length : 0} posts from API`);
+    // Get the raw response text for debugging
+    const responseText = await response.text();
+    console.log('Raw API response text for posts:', responseText.substring(0, 500) + '...');
     
-    // Ensure data is an array and all items are valid posts
-    if (!Array.isArray(data)) {
-      console.error('API did not return an array of posts:', data);
+    // Parse the JSON ourselves
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log('Successfully parsed posts data, type:', typeof data);
+      
+      if (Array.isArray(data)) {
+        console.log(`Parsed ${data.length} posts from array`);
+      } else if (data && typeof data === 'object') {
+        console.log('Parsed response object with keys:', Object.keys(data));
+        
+        // Check if posts are in a nested field like 'posts' or 'items'
+        for (const key of ['posts', 'items', 'data', 'results', 'blogs']) {
+          if (data[key] && Array.isArray(data[key])) {
+            console.log(`Found posts array in field '${key}' with ${data[key].length} items`);
+            data = data[key];
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse JSON response:', e);
       return FALLBACK_POSTS;
     }
     
+    // Ensure data is an array and all items are valid posts
+    if (!Array.isArray(data)) {
+      console.error('API did not return a proper array of posts:', data);
+      return FALLBACK_POSTS;
+    }
+    
+    console.log(`Processing ${data.length} posts from API response`);
+    
     // Filter out any invalid posts and ensure all properties are normalized
-    const validPosts = data.filter(post => post && typeof post === 'object' && post.title && post.slug)
+    const validPosts = data.filter(post => post && typeof post === 'object')
       .map(post => {
-        // Ensure content is properly handled
+        // Extract post data, either directly or from a nested 'post' field
+        const postData = post.post && typeof post.post === 'object' ? post.post : post;
+        
+        // Log the structure of a post to help debug
+        if (postData) {
+          console.log('Post data keys:', Object.keys(postData));
+          console.log('Post has direct content field:', postData.content !== undefined);
+          
+          if (postData.content) {
+            console.log('Content type:', typeof postData.content);
+          }
+        }
+        
+        // Ensure required fields are present
+        if (!postData || !postData.title || !postData.slug) {
+          console.warn('Skipping invalid post without title or slug');
+          return null;
+        }
+        
+        // Extract content from various possible locations
         let content = '';
-        if (post.content) {
-          if (typeof post.content === 'string') {
-            content = post.content;
-          } else if (post.content !== null && typeof post.content === 'object') {
+        
+        // Check direct content
+        if (postData.content !== undefined && postData.content !== null) {
+          if (typeof postData.content === 'string') {
+            content = postData.content;
+          } else if (typeof postData.content === 'object') {
             try {
-              content = JSON.stringify(post.content);
+              content = JSON.stringify(postData.content);
             } catch (e) {
               console.error('Failed to stringify content object:', e);
             }
-          } else if (post.content !== null) {
-            content = String(post.content);
+          } else {
+            content = String(postData.content);
+          }
+        } 
+        // If no direct content, look for other fields that might contain content
+        else {
+          for (const key in postData) {
+            if (
+              (key.toLowerCase().includes('content') || key.toLowerCase().includes('body') || key.toLowerCase().includes('text')) && 
+              key !== 'title' && // Skip title field
+              postData[key] !== undefined && 
+              postData[key] !== null
+            ) {
+              console.log(`Found potential content in field ${key}`);
+              if (typeof postData[key] === 'string') {
+                content = postData[key];
+                break;
+              } else if (typeof postData[key] === 'object') {
+                try {
+                  content = JSON.stringify(postData[key]);
+                  break;
+                } catch (e) {
+                  console.error(`Failed to stringify content object in ${key}:`, e);
+                }
+              } else {
+                content = String(postData[key]);
+                break;
+              }
+            }
           }
         }
         
         return {
-          ...post,
-          id: post.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          id: postData.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          title: String(postData.title),
+          slug: String(postData.slug),
           content: content,
-          author: post.author || 'Anonymous',
-          tags: Array.isArray(post.tags) ? post.tags : []
-        };
-      });
+          author: postData.author || 'Anonymous',
+          tags: Array.isArray(postData.tags) ? postData.tags : [],
+          created: postData.created || postData.timestamp || null,
+          createdAt: postData.createdAt || null
+        } as Post;
+      })
+      .filter((post): post is Post => post !== null); // Type guard to filter out nulls and ensure Post[] type
     
     console.log(`Normalized ${validPosts.length} valid posts`);
     
     // Check if we have valid content in posts
-    const postsWithContent = validPosts.filter(post => post.content && post.content.length > 0);
+    const postsWithContent = validPosts.filter(post => post && post.content && post.content.length > 0);
     console.log(`${postsWithContent.length} posts have content out of ${validPosts.length} total posts`);
     
+    // Log a sample post to debug
+    if (validPosts.length > 0) {
+      const samplePost = validPosts[0];
+      if (samplePost) {
+        console.log('Sample post:', {
+          title: samplePost.title,
+          slug: samplePost.slug,
+          contentLength: samplePost.content?.length || 0,
+          contentPreview: samplePost.content ? samplePost.content.substring(0, 50) + '...' : 'none'
+        });
+      }
+    }
+    
     const posts = validPosts.length > 0 ? validPosts : FALLBACK_POSTS;
+    
+    // Try to fetch content for posts that are missing it
+    if (validPosts.length > 0) {
+      const postsWithoutContent = validPosts.filter(post => !post.content || post.content.length === 0);
+      
+      if (postsWithoutContent.length > 0) {
+        console.log(`Attempting to fetch content for ${postsWithoutContent.length} posts from KV store`);
+        
+        // Fetch content for each post in parallel
+        const contentPromises = postsWithoutContent.map(async (post) => {
+          try {
+            const content = await tryFetchContent(post.slug);
+            if (content && content.trim().length > 0) {
+              console.log(`Retrieved content for ${post.slug} from KV store (length: ${content.length})`);
+              // Update the post with the content
+              post.content = content;
+              return true;
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch content for ${post.slug} from KV:`, error);
+          }
+          return false;
+        });
+        
+        // Wait for all content fetches to complete
+        const results = await Promise.all(contentPromises);
+        const successCount = results.filter(Boolean).length;
+        console.log(`Successfully fetched content for ${successCount} posts from KV store`);
+      }
+    }
     
     // Save posts to cache
     postsCache.setPosts(posts);
@@ -176,12 +374,34 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     
     // If still not in cache, fetch directly by slug
     console.log(`Fetching post directly by slug: ${slug}`);
+    
+    // SPECIAL CASE: Try to get the content directly from KV store
+    let kvContent = '';
+    try {
+      console.log('Attempting to fetch content directly from KV format');
+      const contentResponse = await fetch(`${getBaseUrl()}/api/kv/blogs/${slug}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      
+      if (contentResponse.ok) {
+        kvContent = await contentResponse.text();
+        console.log(`KV content response for ${slug} (length ${kvContent.length}):`);
+        if (kvContent.length > 0) {
+          console.log(kvContent.substring(0, 100) + '...');
+        }
+      }
+    } catch (kvError) {
+      console.warn('Failed to fetch from KV format:', kvError);
+    }
+    
+    // Standard API fetch
     const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      cache: 'no-store', // Ensure we don't get a cached response
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -194,9 +414,22 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    // Get the raw response text for debugging
+    const responseText = await response.text();
+    console.log('Raw API response text for post:', responseText.substring(0, 500) + '...');
     
-    console.log('Raw API response for post:', JSON.stringify(data).substring(0, 200) + '...'); // Debug the raw response
+    // Parse the JSON ourselves
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log('Successfully parsed post data with keys:', Object.keys(data));
+    } catch (e) {
+      console.error('Failed to parse JSON response:', e);
+      return fallbackPost || null;
+    }
+    
+    // Debug the full structure deeply
+    console.log('Full data structure:', JSON.stringify(data, null, 2).substring(0, 1000) + '...');
     
     // Ensure the post has valid structure and normalize all properties
     if (!data || typeof data !== 'object') {
@@ -213,29 +446,131 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     }
     
     // Debug log for content field
+    console.log(`Content field exists: ${dataObj.content !== undefined}`);
     console.log(`Content field type: ${typeof dataObj.content}`);
-    console.log(`Content field value:`, dataObj.content ? dataObj.content.substring(0, 100) + '...' : 'undefined or null');
+    console.log(`Content field nested inside post: ${dataObj.post?.content !== undefined}`);
+    console.log(`Post field exists: ${dataObj.post !== undefined}`);
     
-    // Make sure content is always a string, defaulting to empty string if not present
-    let postContent = '';
-    if (dataObj.content !== undefined && dataObj.content !== null) {
-      if (typeof dataObj.content === 'string') {
-        postContent = dataObj.content;
-      } else if (typeof dataObj.content === 'object') {
-        // Try to stringify object content (some APIs return rich content objects)
-        try {
-          postContent = JSON.stringify(dataObj.content);
-        } catch (e) {
-          console.error('Failed to stringify content object:', e);
-        }
-      } else {
-        // Convert any other type to string
-        postContent = String(dataObj.content);
+    if (dataObj.post && typeof dataObj.post === 'object') {
+      console.log('Post object keys:', Object.keys(dataObj.post));
+      
+      if (dataObj.post.content) {
+        console.log('Content found inside post object');
       }
     }
     
-    // Normalize the post data
-    const post: Post = {
+    // If we have content from the KV store, use it instead of looking for content in the response
+    let postContent = '';
+    
+    if (kvContent && kvContent.trim().length > 0) {
+      console.log('Using content from KV store');
+      postContent = kvContent;
+    } else {
+      // Check for the content in both possible locations (directly or in post object)
+      
+      // Check if the content is directly in the response
+      if (dataObj.content !== undefined && dataObj.content !== null) {
+        console.log('Found content directly in the response object');
+        if (typeof dataObj.content === 'string') {
+          postContent = dataObj.content;
+        } else if (typeof dataObj.content === 'object') {
+          // Try to stringify object content
+          try {
+            postContent = JSON.stringify(dataObj.content);
+          } catch (e) {
+            console.error('Failed to stringify content object:', e);
+          }
+        } else {
+          postContent = String(dataObj.content);
+        }
+      } 
+      // Check if the content is inside a 'post' field
+      else if (dataObj.post && typeof dataObj.post === 'object' && dataObj.post.content) {
+        console.log('Found content inside post object');
+        if (typeof dataObj.post.content === 'string') {
+          postContent = dataObj.post.content;
+        } else if (typeof dataObj.post.content === 'object') {
+          try {
+            postContent = JSON.stringify(dataObj.post.content);
+          } catch (e) {
+            console.error('Failed to stringify content object inside post:', e);
+          }
+        } else {
+          postContent = String(dataObj.post.content);
+        }
+      }
+      // If still no content, check all fields for a content-like field
+      else {
+        console.log('Searching for content in all fields');
+        // Check all top-level fields for content-like field
+        for (const key in dataObj) {
+          if (
+            (key.toLowerCase().includes('content') || key.toLowerCase().includes('body') || key.toLowerCase().includes('text')) && 
+            dataObj[key] !== undefined && 
+            dataObj[key] !== null
+          ) {
+            console.log(`Found potential content in field ${key}`);
+            if (typeof dataObj[key] === 'string') {
+              postContent = dataObj[key];
+              break;
+            } else if (typeof dataObj[key] === 'object') {
+              try {
+                postContent = JSON.stringify(dataObj[key]);
+                break;
+              } catch (e) {
+                console.error(`Failed to stringify content object in ${key}:`, e);
+              }
+            } else {
+              postContent = String(dataObj[key]);
+              break;
+            }
+          }
+        }
+        
+        // If still no content, try fields inside 'post' if it exists
+        if (!postContent && dataObj.post && typeof dataObj.post === 'object') {
+          for (const key in dataObj.post) {
+            if (
+              (key.toLowerCase().includes('content') || key.toLowerCase().includes('body') || key.toLowerCase().includes('text')) && 
+              dataObj.post[key] !== undefined && 
+              dataObj.post[key] !== null
+            ) {
+              console.log(`Found potential content in post.${key}`);
+              if (typeof dataObj.post[key] === 'string') {
+                postContent = dataObj.post[key];
+                break;
+              } else if (typeof dataObj.post[key] === 'object') {
+                try {
+                  postContent = JSON.stringify(dataObj.post[key]);
+                  break;
+                } catch (e) {
+                  console.error(`Failed to stringify content object in post.${key}:`, e);
+                }
+              } else {
+                postContent = String(dataObj.post[key]);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    console.log(`Final content length: ${postContent.length}`);
+    if (postContent.length > 0) {
+      console.log(`Content preview: ${postContent.substring(0, 100)}...`);
+    } else {
+      console.warn('No content found in the response!');
+    }
+    
+    // Use either the directly returned post or create one from the data
+    const post: Post = dataObj.post && typeof dataObj.post === 'object' ? {
+      ...dataObj.post,
+      id: dataObj.post.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      content: postContent || dataObj.post.content || '',
+      author: dataObj.post.author || 'Anonymous',
+      tags: Array.isArray(dataObj.post.tags) ? dataObj.post.tags : []
+    } : {
       id: dataObj.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       title: String(dataObj.title),
       slug: String(dataObj.slug),
@@ -244,7 +579,14 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
       tags: Array.isArray(dataObj.tags) ? dataObj.tags : []
     };
     
-    console.log('Normalized post with content length:', post.content.length); // Debug the processed post
+    console.log('Normalized post:', {
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      contentLength: post.content?.length || 0,
+      author: post.author,
+      tagsCount: post.tags?.length || 0
+    });
     
     // Update the cache with this post
     // We'll get all posts, add/update this one, and save back to cache
@@ -273,120 +615,73 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
  * Create a new blog post
  */
 export async function createPost(post: Post): Promise<CreatePostResponse> {
-  try {
-    console.log('Creating post via Cloudflare Worker API');
-    
-    // Current blog post properties needed by the worker
-    const processedPost = {
-      title: post.title,
-      slug: post.slug,
-      content: post.content.slice(0, 100000), // Hard limit on content length
-      author: post.author || 'Anonymous',
-      tags: post.tags || []
-    };
+  const url = `${getBaseUrl()}/api/blog`;
+  console.log('Creating post at:', url);
 
-    console.log('Post data being sent:', {
-      title: processedPost.title,
-      slug: processedPost.slug,
-      contentLength: processedPost.content.length
-    });
-    
-    const response = await fetch(`${getBaseUrl()}/api/blog`, {
+  try {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Add authorization header if needed
+        // 'Authorization': `Bearer ${API_TOKEN}`
       },
-      body: JSON.stringify(processedPost),
-      cache: 'no-cache',
+      body: JSON.stringify(post),
+      cache: 'no-store', // Ensure no caching for POST requests
     });
 
+    // Handle non-OK response
     if (!response.ok) {
-      let errorMessage = `API error: ${response.status}`;
-      
+      let errorData: ErrorResponse = {};
       try {
-        // Try to parse the error as JSON
-        const errorData = await response.json() as ErrorResponse;
-        if (errorData && typeof errorData === 'object') {
-          if (errorData.error) {
-            errorMessage = `API error: ${errorData.error}`;
-          }
-          if (errorData.details) {
-            errorMessage += ` - ${errorData.details}`;
-          }
-        }
-      } catch (jsonError) {
-        // If JSON parsing fails, try to get the error as text
-        try {
-          const errorText = await response.text();
-          if (errorText && errorText.length > 100) {
-            errorMessage = `API error: ${response.status} - ${errorText.substring(0, 100)}...`;
-          } else if (errorText) {
-            errorMessage = `API error: ${response.status} - ${errorText}`;
-          }
-        } catch (textError) {
-          // If text parsing also fails, use the status code
-          console.error('Failed to parse error response:', textError);
-        }
+        errorData = await response.json();
+      } catch (e) {
+        console.warn('Could not parse error response JSON');
+        errorData.error = `Request failed with status ${response.status}`;
       }
-      
-      // Add specific error handling for common status codes
-      if (response.status === 401) {
-        errorMessage = 'API error: Authentication failed. Please check your credentials.';
-      } else if (response.status === 413) {
-        errorMessage = 'API error: Post content is too large. Please reduce the size of your post.';
-      } else if (response.status === 429) {
-        errorMessage = 'API error: Too many requests. Please try again later.';
-      } else if (response.status >= 500) {
-        errorMessage = 'API error: Server encountered an error. The service might be temporarily unavailable.';
-      }
-      
-      console.error('API error response:', errorMessage);
-      throw new Error(errorMessage);
+      console.error('Error creating post:', errorData);
+      return {
+        success: false,
+        message: errorData.message || errorData.error || 'Failed to create post',
+        post: post // Return original post data on failure
+      };
     }
 
-    // Parse the successful response
-    const result = await response.json() as CreatePostResponse;
-    console.log('Post created successfully:', result);
-    
-    // Clear the posts cache after creating a new post
-    if (typeof window !== 'undefined') {
-      try {
-        // Clear the cache to ensure we fetch fresh data next time
-        postsCache.clearCache();
-      } catch (error) {
-        console.error('Error clearing cache after post creation:', error);
-      }
-    }
-    
-    return result;
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.error('Connection error - unable to reach API server');
-      throw new Error('Failed to fetch: Unable to connect to the server');
+    // Parse successful response
+    const createdPostData = await response.json();
+    console.log('Post created successfully:', createdPostData);
+
+    // Clear the cache after successful creation
+    postsCache.clearCache();
+    console.log('Posts cache cleared after creation.');
+
+    // Check if the response structure is as expected
+    let finalPost: Post;
+    if (createdPostData && createdPostData.id) {
+      // Assuming the response is the created post object itself
+      finalPost = createdPostData as Post;
+    } else if (createdPostData && createdPostData.post && createdPostData.post.id) {
+      // Assuming the response contains a 'post' field
+      finalPost = createdPostData.post as Post;
     } else {
-      console.error('Error creating post:', error);
-      
-      // Return development mode success for local testing
-      if (process.env.NODE_ENV === 'development') {
-        const mockPost: Post = {
-          id: 'local-' + Date.now(),
-          title: post.title,
-          slug: post.slug,
-          content: post.content,
-          author: post.author,
-          tags: post.tags,
-          created: Date.now()
-        };
-        
-        return {
-          post: mockPost,
-          success: true,
-          message: '[DEV MODE] Post created successfully (simulated)'
-        };
-      }
-      
-      throw error;
+      // Fallback if structure is unexpected
+      console.warn('Unexpected create post response structure');
+      finalPost = { ...post, id: 'unknown-' + Date.now() }; // Create a temporary ID
     }
+    
+    return {
+      success: true,
+      message: 'Post created successfully',
+      post: finalPost
+    };
+
+  } catch (error) {
+    console.error('Network or fetch error creating post:', error);
+    return {
+      success: false,
+      message: String(error) || 'An unexpected error occurred',
+      post: post // Return original post data on failure
+    };
   }
 }
 
@@ -394,58 +689,42 @@ export async function createPost(post: Post): Promise<CreatePostResponse> {
  * Update a blog post by slug
  */
 export async function updatePost(slug: string, post: Post): Promise<Post | null> {
+  const url = `${getBaseUrl()}/api/blog/${slug}`;
+  console.log('Updating post at:', url);
+  
   try {
-    console.log(`Updating post with slug ${slug}`);
-    
-    // Process the post data
-    const processedPost = {
-      title: post.title,
-      slug: post.slug,
-      content: post.content,
-      author: post.author || 'Anonymous',
-      tags: post.tags || []
-    };
-
-    const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
+    const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        // Add authorization header if needed
+        // 'Authorization': `Bearer ${API_TOKEN}`
       },
-      body: JSON.stringify(processedPost),
-      cache: 'no-cache',
+      body: JSON.stringify(post),
+      cache: 'no-store' // Avoid caching PUT requests
     });
 
     if (!response.ok) {
-      console.error(`API error when updating post: ${response.status}`);
-      throw new Error(`Failed to update post: ${response.status}`);
+      console.error(`API error updating post: ${response.status}`);
+      try {
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
+      } catch (e) { /* Ignore if no JSON body */ }
+      return null; // Indicate failure
     }
 
-    const updatedPost = await response.json() as Post;
+    const updatedPost = await response.json();
+    console.log('Post updated successfully:', updatedPost);
     
-    // Update the post in the cache
-    const cachedPosts = postsCache.getPosts();
-    if (cachedPosts) {
-      const postIndex = cachedPosts.findIndex(p => p.slug === slug);
-      if (postIndex >= 0) {
-        cachedPosts[postIndex] = updatedPost;
-        postsCache.setPosts(cachedPosts);
-      }
-    }
-    
+    // Clear the cache after successful update
+    postsCache.clearCache();
+    console.log('Posts cache cleared after update.');
+
     return updatedPost;
+
   } catch (error) {
-    console.error(`Error updating post with slug ${slug}:`, error);
-    
-    // For development mode, simulate successful update
-    if (process.env.NODE_ENV === 'development') {
-      const mockUpdatedPost: Post = {
-        ...post,
-        updated: Date.now()
-      };
-      return mockUpdatedPost;
-    }
-    
-    throw error;
+    console.error('Network or fetch error updating post:', error);
+    return null;
   }
 }
 
@@ -453,39 +732,43 @@ export async function updatePost(slug: string, post: Post): Promise<Post | null>
  * Delete a blog post by slug
  */
 export async function deletePost(slug: string): Promise<boolean> {
+  const url = `${getBaseUrl()}/api/blog/${slug}`;
+  console.log('Deleting post at:', url);
+
   try {
-    console.log(`Deleting post with slug ${slug}`);
-    
-    const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: {
-        'Content-Type': 'application/json',
+        // Add authorization header if needed
+        // 'Authorization': `Bearer ${API_TOKEN}`
       },
-      cache: 'no-cache',
+      cache: 'no-store' // Avoid caching DELETE requests
     });
 
     if (!response.ok) {
-      console.error(`API error when deleting post: ${response.status}`);
-      throw new Error(`Failed to delete post: ${response.status}`);
+      console.error(`API error deleting post: ${response.status}`);
+      try {
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
+      } catch (e) { /* Ignore if no JSON body */ }
+      return false; // Indicate failure
     }
 
-    // Remove the post from cache
-    const cachedPosts = postsCache.getPosts();
-    if (cachedPosts) {
-      const filteredPosts = cachedPosts.filter(p => p.slug !== slug);
-      postsCache.setPosts(filteredPosts);
-    }
-    
-    return true;
+    // Check response body for success message if needed
+    try {
+      const result = await response.json();
+      console.log('Delete response:', result);
+    } catch (e) { /* Ignore if no JSON body */ }
+
+    // Clear the cache after successful deletion
+    postsCache.clearCache();
+    console.log('Posts cache cleared after deletion.');
+
+    return true; // Indicate success
+
   } catch (error) {
-    console.error(`Error deleting post with slug ${slug}:`, error);
-    
-    // For development mode, simulate successful deletion
-    if (process.env.NODE_ENV === 'development') {
-      return true;
-    }
-    
-    throw error;
+    console.error('Network or fetch error deleting post:', error);
+    return false;
   }
 }
 
