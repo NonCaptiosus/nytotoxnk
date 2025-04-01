@@ -69,15 +69,18 @@ export async function fetchPosts(): Promise<Post[]> {
   // Try to get posts from cache first
   const cachedPosts = postsCache.getPosts();
   if (cachedPosts) {
+    console.log(`Using ${cachedPosts.length} cached posts`);
     return cachedPosts;
   }
   
   try {
+    console.log('Fetching all posts from API');
     const response = await fetch(`${getBaseUrl()}/api/blog`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store', // Ensure we don't use a cached response
     });
 
     if (!response.ok) {
@@ -86,6 +89,7 @@ export async function fetchPosts(): Promise<Post[]> {
     }
 
     const data = await response.json() as Post[];
+    console.log(`Received ${Array.isArray(data) ? data.length : 0} posts from API`);
     
     // Ensure data is an array and all items are valid posts
     if (!Array.isArray(data)) {
@@ -95,13 +99,37 @@ export async function fetchPosts(): Promise<Post[]> {
     
     // Filter out any invalid posts and ensure all properties are normalized
     const validPosts = data.filter(post => post && typeof post === 'object' && post.title && post.slug)
-      .map(post => ({
-        ...post,
-        id: post.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        content: post.content || '',
-        author: post.author || 'Anonymous',
-        tags: Array.isArray(post.tags) ? post.tags : []
-      }));
+      .map(post => {
+        // Ensure content is properly handled
+        let content = '';
+        if (post.content) {
+          if (typeof post.content === 'string') {
+            content = post.content;
+          } else if (post.content !== null && typeof post.content === 'object') {
+            try {
+              content = JSON.stringify(post.content);
+            } catch (e) {
+              console.error('Failed to stringify content object:', e);
+            }
+          } else if (post.content !== null) {
+            content = String(post.content);
+          }
+        }
+        
+        return {
+          ...post,
+          id: post.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          content: content,
+          author: post.author || 'Anonymous',
+          tags: Array.isArray(post.tags) ? post.tags : []
+        };
+      });
+    
+    console.log(`Normalized ${validPosts.length} valid posts`);
+    
+    // Check if we have valid content in posts
+    const postsWithContent = validPosts.filter(post => post.content && post.content.length > 0);
+    console.log(`${postsWithContent.length} posts have content out of ${validPosts.length} total posts`);
     
     const posts = validPosts.length > 0 ? validPosts : FALLBACK_POSTS;
     
@@ -124,6 +152,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
   // Try to get post from cache first
   const cachedPost = postsCache.getPostBySlug(slug);
   if (cachedPost) {
+    console.log(`Using cached post for slug ${slug} with content length: ${cachedPost.content?.length || 0}`);
     return cachedPost;
   }
   
@@ -140,16 +169,19 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
       // Check if we now have the post in the cache
       const newlyCachedPost = postsCache.getPostBySlug(slug);
       if (newlyCachedPost) {
+        console.log(`Found post in newly populated cache for ${slug} with content length: ${newlyCachedPost.content?.length || 0}`);
         return newlyCachedPost;
       }
     }
     
     // If still not in cache, fetch directly by slug
+    console.log(`Fetching post directly by slug: ${slug}`);
     const response = await fetch(`${getBaseUrl()}/api/blog/${slug}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store', // Ensure we don't get a cached response
     });
 
     if (!response.ok) {
@@ -164,7 +196,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
 
     const data = await response.json();
     
-    console.log('Raw API response for post:', data); // Debug the raw response
+    console.log('Raw API response for post:', JSON.stringify(data).substring(0, 200) + '...'); // Debug the raw response
     
     // Ensure the post has valid structure and normalize all properties
     if (!data || typeof data !== 'object') {
@@ -180,8 +212,27 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
       return fallbackPost || null;
     }
     
+    // Debug log for content field
+    console.log(`Content field type: ${typeof dataObj.content}`);
+    console.log(`Content field value:`, dataObj.content ? dataObj.content.substring(0, 100) + '...' : 'undefined or null');
+    
     // Make sure content is always a string, defaulting to empty string if not present
-    const postContent = dataObj.content !== undefined ? String(dataObj.content) : '';
+    let postContent = '';
+    if (dataObj.content !== undefined && dataObj.content !== null) {
+      if (typeof dataObj.content === 'string') {
+        postContent = dataObj.content;
+      } else if (typeof dataObj.content === 'object') {
+        // Try to stringify object content (some APIs return rich content objects)
+        try {
+          postContent = JSON.stringify(dataObj.content);
+        } catch (e) {
+          console.error('Failed to stringify content object:', e);
+        }
+      } else {
+        // Convert any other type to string
+        postContent = String(dataObj.content);
+      }
+    }
     
     // Normalize the post data
     const post: Post = {
@@ -193,7 +244,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
       tags: Array.isArray(dataObj.tags) ? dataObj.tags : []
     };
     
-    console.log('Normalized post with content:', post); // Debug the processed post
+    console.log('Normalized post with content length:', post.content.length); // Debug the processed post
     
     // Update the cache with this post
     // We'll get all posts, add/update this one, and save back to cache

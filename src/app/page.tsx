@@ -71,9 +71,11 @@ export default function Home() {
                   </Link>
                 </h3>
                 <p className="text-secondary dark:text-accent-dark mb-4">
-                  {post.content && post.content.length > 150 
-                    ? `${post.content.substring(0, 150)}...` 
-                    : post.content || ''}
+                  {post.content && post.content.length > 0 
+                    ? (post.content.length > 150 
+                        ? `${post.content.substring(0, 150).trim()}...` 
+                        : post.content.trim())
+                    : 'No content available.'}
                 </p>
                 <div className="flex justify-between items-center text-sm text-secondary dark:text-accent-dark">
                   <span>

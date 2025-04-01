@@ -23,19 +23,25 @@ export default function BlogPostPage() {
           throw new Error('Invalid slug');
         }
         
+        console.log(`Loading post with slug: ${slug}`);
+        
         // First try to get the post from context
         const cachedPost = getPostBySlug(slug);
         if (cachedPost) {
+          console.log(`Using cached post from context with content length: ${cachedPost.content?.length || 0}`);
           setPost(cachedPost);
           setLoading(false);
           return;
         }
         
         // If not in context, fetch it
+        console.log(`Fetching post by slug: ${slug}`);
         const data = await fetchPostBySlug(slug);
         if (!data) {
           throw new Error('Post not found');
         }
+        
+        console.log(`Received post data with content length: ${data.content?.length || 0}`);
         setPost(data);
       } catch (err) {
         console.error(`Error loading post with slug ${slug}:`, err);
@@ -55,6 +61,28 @@ export default function BlogPostPage() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Function to render content with proper paragraphs
+  const renderContent = (content: string | undefined) => {
+    if (!content) return <p className="dark:text-gray-200">This post has no content.</p>;
+    
+    try {
+      // Split by paragraphs and filter out empty ones
+      const paragraphs = content.split(/\n\n+/).filter(p => p.trim() !== '');
+      
+      if (paragraphs.length === 0) {
+        // If no paragraphs, just render the content as a single block
+        return <p className="dark:text-gray-200 mb-4">{content}</p>;
+      }
+      
+      return paragraphs.map((paragraph, index) => (
+        <p key={index} className="dark:text-gray-200 mb-4">{paragraph}</p>
+      ));
+    } catch (e) {
+      console.error('Error rendering content:', e);
+      return <p className="dark:text-gray-200">{content}</p>;
+    }
   };
 
   if (loading) {
@@ -118,11 +146,7 @@ export default function BlogPostPage() {
         </header>
         
         <div className="prose max-w-none dark:prose-invert">
-          {/* Split content by paragraphs and render */}
-          {post.content && post.content.split('\n\n').map((paragraph, index) => (
-            <p key={index} className="dark:text-gray-200">{paragraph}</p>
-          ))}
-          {!post.content && <p className="dark:text-gray-200">This post has no content.</p>}
+          {renderContent(post.content)}
         </div>
       </article>
       

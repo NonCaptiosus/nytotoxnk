@@ -194,9 +194,11 @@ export default function BlogsPage() {
               </div>
               
               <p className="text-secondary dark:text-accent-dark mb-4">
-                {post.content && post.content.length > 250 
-                  ? `${post.content.substring(0, 250)}...` 
-                  : post.content || ''}
+                {post.content && post.content.length > 0 
+                  ? (post.content.length > 250 
+                      ? `${post.content.substring(0, 250).trim()}...` 
+                      : post.content.trim())
+                  : 'No content available.'}
               </p>
               <div className="flex justify-end">
                 <Link 
