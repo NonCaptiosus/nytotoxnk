@@ -14,7 +14,6 @@ const friendMap: { [key: string]: string } = {
   'SM-G97': 'Ervis',      // Samsung S10 series (common prefix)
   'SM-S928': 'Andrea',    // Samsung S24 Ultra (example model)
   'Pixel 7': 'Kevin',     // Pixel 7
-  // 'Erald' needs a specific identifier if possible
   'SM-G98': 'Romeo',     // Samsung S20 series (common prefix)
   'SM-S918': 'Boss',      // Samsung S23 Ultra (example model)
   'XQ-': 'Niko',        // Sony Xperia common prefix (e.g., XQ-CQ54 for Xperia 1 IV) - I VI might be different

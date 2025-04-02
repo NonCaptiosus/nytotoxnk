@@ -33,7 +33,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${libre.variable} ${montserrat.variable} font-sans`}>
+      <head>
+        <link rel="icon" type="image/png" href="/favicon.png" />
+      </head>
+      <body className={`${libre.variable} ${montserrat.variable} font-sans overflow-x-hidden`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <PostsProvider>
